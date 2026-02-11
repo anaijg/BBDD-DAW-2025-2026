@@ -3,16 +3,16 @@ use empleados;
 # 1. Devuelve id, nif, nombre y apellido1 de los empleados cuyo nif no tenga 9 caracteres.
 select id, nif, nombre, apellido1
 from empleado
-where length(nif) != 9;
+where length(nif) != 9; # where nif not like '_________'
 
 # 2. De los empleados, devuelve id, nif, una columna nif_numero (solo dígitos, sin letra) y otra nif_letra.
 # Ordena por nif_numero ascendente.
-select id, nif, left(nif, 8) as nif_numero, right(nif, 1) as nif_letra
+select id, nif, left(nif, 8) as nif_numero, right(nif, 1) as nif_letra # substring(nif, 1, 8) as nif_numero, substring(nif, -1) as nif_letra
 from empleado
 order by nif_numero;
 
 # 3. De los empleados, devuelve id, nombre, apellido1, apellido2 y la longitud de su nombre completo. Muestra los 3 empleados con mayor longitud.
-select id, nombre, apellido1, apellido2, (length(nombre) + length(apellido1) + length(apellido2)) as longitud_nombre
+select id, nombre, apellido1, apellido2, (length(nombre) + length(apellido1) + length(apellido2)) as longitud_nombre # length(concat(nombre, apellido1, apellido2)) as longitud_nombre
 from empleado
 order by longitud_nombre desc
 limit 3;
