@@ -99,24 +99,169 @@ where f.nombre = 'Crucial';
 -- 755,120,437.5,2
 
 # 16. Muestra el número total de productos que tiene cada uno de los fabricantes. El listado también debe incluir los fabricantes que no tienen ningún producto. El resultado mostrará dos columnas, una con el nombre del fabricante y otra con el número de productos que tiene. Ordene el resultado descendentemente por el número de productos.
+select f.nombre, count(p.id)
+from fabricante f
+         left join producto p on f.id = p.id_fabricante
+group by f.nombre
+order by count(p.id) desc;
+/*
+ +---------------+-----------+
+|nombre         |count(p.id)|
++---------------+-----------+
+|Asus           |2          |
+|Lenovo         |2          |
+|Hewlett-Packard|2          |
+|Crucial        |2          |
+|Samsung        |1          |
+|Seagate        |1          |
+|Gigabyte       |1          |
+|Huawei         |0          |
+|Xiaomi         |0          |
++---------------+-----------+
+ */
 
 # 17. Muestra el precio máximo, precio mínimo y precio medio de los productos de cada uno de los fabricantes. El resultado mostrará el nombre del fabricante junto con los datos que se solicitan.
+select f.nombre, max(p.precio), min(p.precio), avg(p.precio)
+from producto p
+         join fabricante f on p.id_fabricante = f.id
+group by f.nombre;
+/*
+ +---------------+-------------+-------------+-------------+
+|nombre         |max(p.precio)|min(p.precio)|avg(p.precio)|
++---------------+-------------+-------------+-------------+
+|Seagate        |86.99        |86.99        |86.99        |
+|Crucial        |755          |120          |437.5        |
+|Samsung        |150.99       |150.99       |150.99       |
+|Gigabyte       |185          |185          |185          |
+|Asus           |245.99       |202          |223.995      |
+|Lenovo         |559          |444          |501.5        |
+|Hewlett-Packard|180          |59.99        |119.995      |
++---------------+-------------+-------------+-------------+
+ */
 
 # 18. Muestra el precio máximo, precio mínimo, precio medio y el número total de productos de los fabricantes que tienen un precio medio superior a 200€. No es necesario mostrar el nombre del fabricante, con el identificador del fabricante es suficiente.
+select f.id, max(p.precio), min(p.precio), avg(p.precio), count(p.id)
+from producto p
+         join fabricante f on p.id_fabricante = f.id
+group by f.id
+having avg(p.precio) > 200;
+/*
+ +--+-------------+-------------+-------------+-----------+
+|id|max(p.precio)|min(p.precio)|avg(p.precio)|count(p.id)|
++--+-------------+-------------+-------------+-----------+
+|6 |755          |120          |437.5        |2          |
+|1 |245.99       |202          |223.995      |2          |
+|2 |559          |444          |501.5        |2          |
++--+-------------+-------------+-------------+-----------+
+ */
 
 # 19. Muestra el nombre de cada fabricante, junto con el precio máximo, precio mínimo, precio medio y el número total de productos de los fabricantes que tienen un precio medio superior a 200€. Es necesario mostrar el nombre del fabricante.
+select f.nombre, max(p.precio), min(p.precio), avg(p.precio), count(p.id)
+from producto p
+         join fabricante f on p.id_fabricante = f.id
+group by f.id
+having avg(p.precio) > 200;
+/*
+ +-------+-------------+-------------+-------------+-----------+
+|nombre |max(p.precio)|min(p.precio)|avg(p.precio)|count(p.id)|
++-------+-------------+-------------+-------------+-----------+
+|Crucial|755          |120          |437.5        |2          |
+|Asus   |245.99       |202          |223.995      |2          |
+|Lenovo |559          |444          |501.5        |2          |
++-------+-------------+-------------+-------------+-----------+
+ */
 
 # 20. Calcula el número de productos que tienen un precio mayor o igual a 180€.
+select count(id)
+from producto
+where precio >= 180;
+/*
+ 7
+ */
 
 # 21. Calcula el número de productos que tiene cada fabricante con un precio mayor o igual a 180€.
+select id_fabricante, count(id)
+from producto
+where precio >= 180
+group by id_fabricante;
+/*
+ +-------------+---------+
+|id_fabricante|count(id)|
++-------------+---------+
+|1            |2        |
+|2            |2        |
+|3            |1        |
+|6            |1        |
+|7            |1        |
++-------------+---------+
+ */
 
 # 22. Lista el precio medio los productos de cada fabricante, mostrando solamente el identificador del fabricante.
+select id_fabricante, avg(precio)
+from producto
+group by id_fabricante;
+/*
+ +-------------+-----------+
+|id_fabricante|avg(precio)|
++-------------+-----------+
+|1            |223.995    |
+|2            |501.5      |
+|3            |119.995    |
+|4            |150.99     |
+|5            |86.99      |
++-------------+-----------+
+ */
 
 # 23. Lista el precio medio los productos de cada fabricante, mostrando solamente el nombre del fabricante.
+select f.nombre, avg(p.precio)
+from producto p join fabricante f on p.id_fabricante = f.id
+group by f.nombre;
+/*
+ +---------------+-------------+
+|nombre         |avg(p.precio)|
++---------------+-------------+
+|Seagate        |86.99        |
+|Crucial        |437.5        |
+|Samsung        |150.99       |
+|Gigabyte       |185          |
+|Asus           |223.995      |
+|Lenovo         |501.5        |
+|Hewlett-Packard|119.995      |
++---------------+-------------+
+ */
 
 # 24. Lista los nombres de los fabricantes cuyos productos tienen un precio medio mayor o igual a 150€.
+select f.nombre, avg(p.precio)
+    from producto p join fabricante f on p.id_fabricante = f.id
+group by f.nombre
+having avg(p.precio) >= 150;
+/*
+ +--------+-------------+
+|nombre  |avg(p.precio)|
++--------+-------------+
+|Crucial |437.5        |
+|Samsung |150.99       |
+|Gigabyte|185          |
+|Asus    |223.995      |
+|Lenovo  |501.5        |
++--------+-------------+
+ */
 
 # 25. Devuelve un listado con los nombres de los fabricantes que tienen 2 o más productos.
+select f.nombre, count(p.id)
+    from producto p join fabricante f on p.id_fabricante = f.id
+group by f.nombre
+having count(p.id) >= 2;
+/*
+ +---------------+-----------+
+|nombre         |count(p.id)|
++---------------+-----------+
+|Asus           |2          |
+|Lenovo         |2          |
+|Hewlett-Packard|2          |
+|Crucial        |2          |
++---------------+-----------+
+ */
 
 # 26. Devuelve un listado con los nombres de los fabricantes y el número de productos que tiene cada uno con un precio superior o igual a 220 €. No es necesario mostrar el nombre de los fabricantes que no tienen productos que cumplan la condición.
 
@@ -126,6 +271,20 @@ where f.nombre = 'Crucial';
 # Lenovo	2
 # Asus	1
 # Crucial	1
+select f.nombre, count(p.id)
+    from producto p join fabricante f on p.id_fabricante = f.id
+where p.precio >= 220
+group by f.nombre;
+/*
+ +-------+-----------+
+|nombre |count(p.id)|
++-------+-----------+
+|Crucial|1          |
+|Asus   |1          |
+|Lenovo |2          |
++-------+-----------+
+ */
+
 # 27. Devuelve un listado con los nombres de los fabricantes y el número de productos que tiene cada uno con un precio superior o igual a 220 €. El listado debe mostrar el nombre de todos los fabricantes, es decir, si hay algún fabricante que no tiene productos con un precio superior o igual a 220€ deberá aparecer en el listado con un valor igual a 0 en el número de productos.
 # Ejemplo del resultado esperado:
 #
@@ -139,6 +298,9 @@ where f.nombre = 'Crucial';
 # Hewlett-Packard	0
 # Xiaomi	0
 # Seagate	0
+
+
 # 28. Devuelve un listado con los nombres de los fabricantes donde la suma del precio de todos sus productos es superior a 1000 €.
+
 
 # 29. Devuelve un listado con el nombre del producto más caro que tiene cada fabricante. El resultado debe tener tres columnas: nombre del producto, precio y nombre del fabricante. El resultado tiene que estar ordenado alfabéticamente de menor a mayor por el nombre del fabricante.
