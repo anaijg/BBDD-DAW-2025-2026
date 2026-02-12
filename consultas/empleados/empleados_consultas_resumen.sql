@@ -2,38 +2,41 @@
 use empleados;
 # 1. Calcula la suma del presupuesto de todos los departamentos.
 select sum(presupuesto)
-from departamento;
+from departamento; -- 1035000
+
 # 2. Calcula la media del presupuesto de todos los departamentos.
 select avg(presupuesto)
-from departamento;
+from departamento; -- 147857.14285714287
 
 # 3. Calcula el valor mínimo del presupuesto de todos los departamentos.
 select min(presupuesto)
-from departamento;
+from departamento; -- 0
 
 # 4. Calcula el nombre del departamento y el presupuesto que tiene asignado, del departamento con menor presupuesto.
 select nombre, presupuesto
 from departamento
 order by presupuesto
-limit 1;
+limit 1; -- Proyectos|0
+
 
 # 5. Calcula el valor máximo del presupuesto de todos los departamentos.
 select max(presupuesto)
-from departamento;
+from departamento; -- 375000
 
 # 6. Calcula el nombre del departamento y el presupuesto que tiene asignado, del departamento con mayor presupuesto.
 select nombre, presupuesto
 from departamento
 order by presupuesto desc
-limit 1;
+limit 1; -- I+D|375000
+
 
 # 7. Calcula el número total de empleados que hay en la tabla empleado.
 select count(*)
-from empleado;
+from empleado; -- 13
 
 # 8. Calcula el número de empleados que no tienen NULL en su segundo apellido.
 select count(apellido2)
-from empleado;
+from empleado; -- 11
 
 # 9. Calcula el número de empleados que hay en cada departamento. Tienes que devolver dos columnas, una con el nombre del departamento y otra con el número de empleados que tiene asignados.
 
