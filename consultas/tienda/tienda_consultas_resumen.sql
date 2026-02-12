@@ -99,27 +99,27 @@ where f.nombre = 'Crucial';
 -- 755,120,437.5,2
 
 # 16. Muestra el número total de productos que tiene cada uno de los fabricantes. El listado también debe incluir los fabricantes que no tienen ningún producto. El resultado mostrará dos columnas, una con el nombre del fabricante y otra con el número de productos que tiene. Ordene el resultado descendentemente por el número de productos.
-#
+
 # 17. Muestra el precio máximo, precio mínimo y precio medio de los productos de cada uno de los fabricantes. El resultado mostrará el nombre del fabricante junto con los datos que se solicitan.
-#
+
 # 18. Muestra el precio máximo, precio mínimo, precio medio y el número total de productos de los fabricantes que tienen un precio medio superior a 200€. No es necesario mostrar el nombre del fabricante, con el identificador del fabricante es suficiente.
-#
+
 # 19. Muestra el nombre de cada fabricante, junto con el precio máximo, precio mínimo, precio medio y el número total de productos de los fabricantes que tienen un precio medio superior a 200€. Es necesario mostrar el nombre del fabricante.
-#
+
 # 20. Calcula el número de productos que tienen un precio mayor o igual a 180€.
-#
+
 # 21. Calcula el número de productos que tiene cada fabricante con un precio mayor o igual a 180€.
-#
+
 # 22. Lista el precio medio los productos de cada fabricante, mostrando solamente el identificador del fabricante.
-#
+
 # 23. Lista el precio medio los productos de cada fabricante, mostrando solamente el nombre del fabricante.
-#
+
 # 24. Lista los nombres de los fabricantes cuyos productos tienen un precio medio mayor o igual a 150€.
-#
+
 # 25. Devuelve un listado con los nombres de los fabricantes que tienen 2 o más productos.
-#
+
 # 26. Devuelve un listado con los nombres de los fabricantes y el número de productos que tiene cada uno con un precio superior o igual a 220 €. No es necesario mostrar el nombre de los fabricantes que no tienen productos que cumplan la condición.
-#
+
 # Ejemplo del resultado esperado:
 #
 # nombre	total
@@ -140,5 +140,5 @@ where f.nombre = 'Crucial';
 # Xiaomi	0
 # Seagate	0
 # 28. Devuelve un listado con los nombres de los fabricantes donde la suma del precio de todos sus productos es superior a 1000 €.
-#
+
 # 29. Devuelve un listado con el nombre del producto más caro que tiene cada fabricante. El resultado debe tener tres columnas: nombre del producto, precio y nombre del fabricante. El resultado tiene que estar ordenado alfabéticamente de menor a mayor por el nombre del fabricante.
