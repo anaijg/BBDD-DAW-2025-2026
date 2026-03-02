@@ -1,13 +1,46 @@
+use tienda;
 # 1.1.7 Subconsultas (En la cláusula WHERE)
 # 1.1.7.1 Con operadores básicos de comparación
-# Devuelve todos los productos del fabricante Lenovo. (Sin utilizar INNER JOIN).
-#
+# 1. Devuelve todos los productos del fabricante Lenovo. (Sin utilizar INNER JOIN).
+select *
+from producto
+where id_fabricante = (select id
+                       from fabricante
+                       where nombre = 'Lenovo');
+
 # Devuelve todos los datos de los productos que tienen el mismo precio que el producto más caro del fabricante Lenovo. (Sin utilizar INNER JOIN).
-#
-# Lista el nombre del producto más caro del fabricante Lenovo.
-#
+select *
+from producto
+where precio = (select max(precio)
+                from producto
+                where id_fabricante = (select id
+                                       from fabricante
+                                       where nombre = 'Lenovo'));
+
+# Lista el nombre del producto más caro del fabricante Lenovo. (Es decir, se tienen que cumplir dos condiciones: que el precio sea el más caro del fabricante Lenovo, y además que el fabricante sea Lenovo)
+select nombre
+from producto
+where precio = (select max(precio)
+                from producto
+                where id_fabricante = (select id
+                                       from fabricante
+                                       where nombre = 'Lenovo'))
+  and id_fabricante = (select id from fabricante where nombre = 'Lenovo');
+
+
 # Lista el nombre del producto más barato del fabricante Hewlett-Packard.
-#
+select nombre
+from producto
+where precio =
+(select min(precio)
+from producto
+where id_fabricante = (select id
+                       from fabricante
+                       where nombre = 'Hewlett-Packard')
+  and id_fabricante = (select id
+                       from fabricante
+                       where nombre = 'Hewlett-Packard'));
+
 # Devuelve todos los productos de la base de datos que tienen un precio mayor o igual al producto más caro del fabricante Lenovo.
 #
 # Lista todos los productos del fabricante Asus que tienen un precio superior al precio medio de todos sus productos.
