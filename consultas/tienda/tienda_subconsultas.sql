@@ -8,7 +8,7 @@ where id_fabricante = (select id
                        from fabricante
                        where nombre = 'Lenovo');
 
-# Devuelve todos los datos de los productos que tienen el mismo precio que el producto más caro del fabricante Lenovo. (Sin utilizar INNER JOIN).
+# 2. Devuelve todos los datos de los productos que tienen el mismo precio que el producto más caro del fabricante Lenovo. (Sin utilizar INNER JOIN).
 select *
 from producto
 where precio = (select max(precio)
@@ -17,7 +17,7 @@ where precio = (select max(precio)
                                        from fabricante
                                        where nombre = 'Lenovo'));
 
-# Lista el nombre del producto más caro del fabricante Lenovo. (Es decir, se tienen que cumplir dos condiciones: que el precio sea el más caro del fabricante Lenovo, y además que el fabricante sea Lenovo)
+# 3. Lista el nombre del producto más caro del fabricante Lenovo. (Es decir, se tienen que cumplir dos condiciones: que el precio sea el más caro del fabricante Lenovo, y además que el fabricante sea Lenovo)
 select nombre
 from producto
 where precio = (select max(precio)
@@ -28,7 +28,7 @@ where precio = (select max(precio)
   and id_fabricante = (select id from fabricante where nombre = 'Lenovo');
 
 
-# Lista el nombre del producto más barato del fabricante Hewlett-Packard.
+# 4. Lista el nombre del producto más barato del fabricante Hewlett-Packard.
 select nombre
 from producto
 where precio =
@@ -41,35 +41,35 @@ where id_fabricante = (select id
                        from fabricante
                        where nombre = 'Hewlett-Packard'));
 
-# Devuelve todos los productos de la base de datos que tienen un precio mayor o igual al producto más caro del fabricante Lenovo.
+# 5. Devuelve todos los productos de la base de datos que tienen un precio mayor o igual al producto más caro del fabricante Lenovo.
 #
-# Lista todos los productos del fabricante Asus que tienen un precio superior al precio medio de todos sus productos.
+# 6. Lista todos los productos del fabricante Asus que tienen un precio superior al precio medio de todos sus productos.
 # 
 # 1.1.7.2 Subconsultas con ALL y ANY
-# Devuelve el producto más caro que existe en la tabla producto sin hacer uso de MAX, ORDER BY ni LIMIT.
+# 7. Devuelve el producto más caro que existe en la tabla producto sin hacer uso de MAX, ORDER BY ni LIMIT.
 #
-# Devuelve el producto más barato que existe en la tabla producto sin hacer uso de MIN, ORDER BY ni LIMIT.
+# 8. Devuelve el producto más barato que existe en la tabla producto sin hacer uso de MIN, ORDER BY ni LIMIT.
 #
-# Devuelve los nombres de los fabricantes que tienen productos asociados. (Utilizando ALL o ANY).
+# 9. Devuelve los nombres de los fabricantes que tienen productos asociados. (Utilizando ALL o ANY).
 #
-# Devuelve los nombres de los fabricantes que no tienen productos asociados. (Utilizando ALL o ANY).
+# 10. Devuelve los nombres de los fabricantes que no tienen productos asociados. (Utilizando ALL o ANY).
 #
 # 1.1.7.3 Subconsultas con IN y NOT IN
-# Devuelve los nombres de los fabricantes que tienen productos asociados. (Utilizando IN o NOT IN).
+# 11. Devuelve los nombres de los fabricantes que tienen productos asociados. (Utilizando IN o NOT IN).
 #
-# Devuelve los nombres de los fabricantes que no tienen productos asociados. (Utilizando IN o NOT IN).
+# 12. Devuelve los nombres de los fabricantes que no tienen productos asociados. (Utilizando IN o NOT IN).
 #
 # 1.1.7.4 Subconsultas con EXISTS y NOT EXISTS
-# Devuelve los nombres de los fabricantes que tienen productos asociados. (Utilizando EXISTS o NOT EXISTS).
+# 13. Devuelve los nombres de los fabricantes que tienen productos asociados. (Utilizando EXISTS o NOT EXISTS).
 #
-# Devuelve los nombres de los fabricantes que no tienen productos asociados. (Utilizando EXISTS o NOT EXISTS).
+# 14. Devuelve los nombres de los fabricantes que no tienen productos asociados. (Utilizando EXISTS o NOT EXISTS).
 #
 # 1.1.7.5 Subconsultas correlacionadas
-# Lista el nombre de cada fabricante con el nombre y el precio de su producto más caro.
+# 15. Lista el nombre de cada fabricante con el nombre y el precio de su producto más caro.
 #
-# Devuelve un listado de todos los productos que tienen un precio mayor o igual a la media de todos los productos de su mismo fabricante.
+# 16. Devuelve un listado de todos los productos que tienen un precio mayor o igual a la media de todos los productos de su mismo fabricante.
 #
-# Lista el nombre del producto más caro del fabricante Lenovo.
+# 17. Lista el nombre del producto más caro del fabricante Lenovo.
 #
 # 1.1.8 Subconsultas (En la cláusula HAVING)
-# Devuelve un listado con todos los nombres de los fabricantes que tienen el mismo número de productos que el fabricante Lenovo.
+# 18. Devuelve un listado con todos los nombres de los fabricantes que tienen el mismo número de productos que el fabricante Lenovo.
