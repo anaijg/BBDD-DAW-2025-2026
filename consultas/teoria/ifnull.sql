@@ -13,7 +13,8 @@
 # # Ejemplo práctico en la base de datos ventas
 # # Si consultamos la tabla cliente, el campo apellido2 o categoria pueden contener nulos.SQL-- Si la categoría es NULL, mostramos 'Sin categoría'
 use ventas;
-# SELECT nombre, IFNULL(categoria, 0)
-# FROM cliente;
+SELECT nombre, ifnull(categoria, 0)
+FROM cliente;
+
 # #
 # # -- En el caso de Adolfo (ID 3), el resultado sería 0 en lugar de NULL.

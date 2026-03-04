@@ -214,7 +214,8 @@ group by id_fabricante;
 
 # 23. Lista el precio medio los productos de cada fabricante, mostrando solamente el nombre del fabricante.
 select f.nombre, avg(p.precio)
-from producto p join fabricante f on p.id_fabricante = f.id
+from producto p
+         join fabricante f on p.id_fabricante = f.id
 group by f.nombre;
 /*
  +---------------+-------------+
@@ -232,7 +233,8 @@ group by f.nombre;
 
 # 24. Lista los nombres de los fabricantes cuyos productos tienen un precio medio mayor o igual a 150€.
 select f.nombre, avg(p.precio)
-    from producto p join fabricante f on p.id_fabricante = f.id
+from producto p
+         join fabricante f on p.id_fabricante = f.id
 group by f.nombre
 having avg(p.precio) >= 150;
 /*
@@ -249,7 +251,8 @@ having avg(p.precio) >= 150;
 
 # 25. Devuelve un listado con los nombres de los fabricantes que tienen 2 o más productos.
 select f.nombre, count(p.id)
-    from producto p join fabricante f on p.id_fabricante = f.id
+from producto p
+         join fabricante f on p.id_fabricante = f.id
 group by f.nombre
 having count(p.id) >= 2;
 /*
@@ -272,7 +275,8 @@ having count(p.id) >= 2;
 # Asus	1
 # Crucial	1
 select f.nombre, count(p.id)
-    from producto p join fabricante f on p.id_fabricante = f.id
+from producto p
+         join fabricante f on p.id_fabricante = f.id
 where p.precio >= 220
 group by f.nombre;
 /*
@@ -298,9 +302,32 @@ group by f.nombre;
 # Hewlett-Packard	0
 # Xiaomi	0
 # Seagate	0
-
+select f.nombre, count(p.id) as cuenta
+from fabricante f
+         left join producto p on f.id = p.id_fabricante
+    and p.precio >=
+        220 -- ponemos el and sin where, para que filtre antes de hacer el join (con where filtraría después de hacer el join)
+group by f.nombre
+order by cuenta desc;
 
 # 28. Devuelve un listado con los nombres de los fabricantes donde la suma del precio de todos sus productos es superior a 1000 €.
-
-
+select f.nombre, sum(p.precio) as suma
+from producto p
+         join fabricante f on p.id_fabricante = f.id
+group by f.nombre
+having suma > 1000;
+/*
+ +------+----+
+|nombre|suma|
++------+----+
+|Lenovo|1003|
++------+----+
+ */
 # 29. Devuelve un listado con el nombre del producto más caro que tiene cada fabricante. El resultado debe tener tres columnas: nombre del producto, precio y nombre del fabricante. El resultado tiene que estar ordenado alfabéticamente de menor a mayor por el nombre del fabricante.
+SELECT p.nombre AS nombre_producto, p.precio, f.nombre AS nombre_fabricante
+FROM producto p
+         JOIN fabricante f ON p.id_fabricante = f.id
+WHERE p.precio = (SELECT MAX(p2.precio)
+                  FROM producto p2
+                  WHERE p2.id_fabricante = f.id)
+ORDER BY f.nombre;
