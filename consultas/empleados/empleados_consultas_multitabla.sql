@@ -90,11 +90,25 @@ where d.id is null;
 select e.nombre, e.apellido1, e.apellido2, d.*
 from empleado e
          right join departamento d on e.id_departamento = d.id
-where e.nombre is null ;
+where e.nombre is null;
 
 # 4. Devuelve un listado con todos los empleados junto con los datos de los departamentos donde trabajan. El listado debe incluir los empleados que no tienen ningún departamento asociado y los departamentos que no tienen ningún empleado asociado. Ordene el listado alfabéticamente por el nombre del departamento.
-select e.nombre, e.apellido1, e.apellido2, d.*
+(select e.nombre, e.apellido1, e.apellido2, d.*
+ from empleado e
+          left join departamento d on e.id_departamento = d.id)
+UNION
+(select e.nombre, e.apellido1, e.apellido2, d.*
+ from empleado e
+          right join departamento d on e.id_departamento = d.id
+ order by d.nombre);
+
+# 5. Devuelve un listado con los empleados que no tienen ningún departamento asociado y los departamentos que no tienen ningún empleado asociado. Ordene el listado alfabéticamente por el nombre del departamento.
+(select e.nombre, e.apellido1, e.apellido2, d.*
+from empleado e
+         left join departamento d on e.id_departamento = d.id
+where d.id is null)
+union
+(select e.nombre, e.apellido1, e.apellido2, d.*
 from empleado e
          right join departamento d on e.id_departamento = d.id
-where e.nombre is null ;
-# 5. Devuelve un listado con los empleados que no tienen ningún departamento asociado y los departamentos que no tienen ningún empleado asociado. Ordene el listado alfabéticamente por el nombre del departamento.
+where e.nombre is null order by d.nombre);
