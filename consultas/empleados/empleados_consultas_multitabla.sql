@@ -65,9 +65,10 @@ from empleado as e
 where d.presupuesto not between 100000 and 200000;
 
 # 10. Devuelve un listado con el nombre de los departamentos donde existe algún empleado cuyo segundo apellido sea NULL. Tenga en cuenta que no debe mostrar nombres de departamentos que estén repetidos.
-    select distinct d.nombre
-    from empleado as e join departamento as d
-on e.id_departamento = d.id
+select distinct d.nombre
+from empleado as e
+         join departamento as d
+              on e.id_departamento = d.id
 where e.apellido2 is null;
 
 
@@ -75,11 +76,25 @@ where e.apellido2 is null;
 # Resuelva todas las consultas utilizando las cláusulas LEFT JOIN y RIGHT JOIN.
 
 # 1. Devuelve un listado con todos los empleados junto con los datos de los departamentos donde trabajan. Este listado también debe incluir los empleados que no tienen ningún departamento asociado.
+select e.nombre, e.apellido1, e.apellido2, d.*
+from empleado e
+         left join departamento d on e.id_departamento = d.id;
 
 # 2. Devuelve un listado donde sólo aparezcan aquellos empleados que no tienen ningún departamento asociado.
+select e.nombre, e.apellido1, e.apellido2, d.*
+from empleado e
+         left join departamento d on e.id_departamento = d.id
+where d.id is null;
 
 # 3. Devuelve un listado donde sólo aparezcan aquellos departamentos que no tienen ningún empleado asociado.
+select e.nombre, e.apellido1, e.apellido2, d.*
+from empleado e
+         right join departamento d on e.id_departamento = d.id
+where e.nombre is null ;
 
 # 4. Devuelve un listado con todos los empleados junto con los datos de los departamentos donde trabajan. El listado debe incluir los empleados que no tienen ningún departamento asociado y los departamentos que no tienen ningún empleado asociado. Ordene el listado alfabéticamente por el nombre del departamento.
-
+select e.nombre, e.apellido1, e.apellido2, d.*
+from empleado e
+         right join departamento d on e.id_departamento = d.id
+where e.nombre is null ;
 # 5. Devuelve un listado con los empleados que no tienen ningún departamento asociado y los departamentos que no tienen ningún empleado asociado. Ordene el listado alfabéticamente por el nombre del departamento.

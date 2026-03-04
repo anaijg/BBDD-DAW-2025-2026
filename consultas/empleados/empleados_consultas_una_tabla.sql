@@ -45,7 +45,7 @@ ORDER BY nombre DESC;
 # 15. Lista los apellidos y el nombre de todos los empleados, ordenados de forma alfabética tendiendo en cuenta en primer lugar sus apellidos y luego su nombre.
 SELECT nombre, apellido1, apellido2
 FROM empleado
-ORDER BY apellido1, apellido2, nombre; 
+ORDER BY apellido1, apellido2, nombre;
 # 16. Devuelve una lista con el nombre y el presupuesto, de los 3 departamentos que tienen mayor presupuesto.
 
 # 17. Devuelve una lista con el nombre y el presupuesto, de los 3 departamentos que tienen menor presupuesto.
