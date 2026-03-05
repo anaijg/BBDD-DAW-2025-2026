@@ -42,4 +42,4 @@ ORDER BY nombre;
 SELECT DISTINCT nombre
 FROM comercial
 WHERE nombre LIKE '%el'
-   OR nombre LIKE '%o'; 
+   OR nombre LIKE '%o';

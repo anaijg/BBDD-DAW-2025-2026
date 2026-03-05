@@ -8,6 +8,8 @@
     <file url="file://$PROJECT_DIR$/consultas/teoria/consultas_multitabla.sql" dialect="MySQL" />
     <file url="file://$PROJECT_DIR$/consultas/teoria/consultas_resumen.sql" dialect="MySQL" />
     <file url="file://$PROJECT_DIR$/consultas/teoria/ifnull.sql" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/consultas/teoria/subconsultas_all_any.sql" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/consultas/teoria/subconsultas_in_not_in.sql" dialect="MySQL" />
     <file url="file://$PROJECT_DIR$/consultas/teoria/union.sql" dialect="MySQL" />
     <file url="file://$PROJECT_DIR$/consultas/tienda/tienda_consultas_multitabla.sql" dialect="MySQL" />
     <file url="file://$PROJECT_DIR$/consultas/tienda/tienda_consultas_resumen.sql" dialect="MySQL" />
