@@ -22,19 +22,41 @@ where presupuesto = (select min(presupuesto)
 
 # 1.2.7.2 Subconsultas con ALL y ANY
 # 4. Devuelve el nombre del departamento con mayor presupuesto y la cantidad que tiene asignada. Sin hacer uso de MAX, ORDER BY ni LIMIT.
-#
+SELECT nombre
+FROM departamento
+WHERE presupuesto >= ALL (SELECT presupuesto FROM departamento);
+
 # 5. Devuelve el nombre del departamento con menor presupuesto y la cantidad que tiene asignada. Sin hacer uso de MIN, ORDER BY ni LIMIT.
-#
+SELECT nombre
+FROM departamento
+WHERE presupuesto <= ALL (SELECT presupuesto FROM departamento);
+
 # 6. Devuelve los nombres de los departamentos que tienen empleados asociados. (Utilizando ALL o ANY).
-#
+SELECT nombre
+FROM departamento
+WHERE id = ANY (SELECT id_departamento FROM empleado);
+
 # 7. Devuelve los nombres de los departamentos que no tienen empleados asociados. (Utilizando ALL o ANY).
-#
+SELECT nombre
+FROM departamento
+WHERE id != ALL (SELECT id_departamento
+                 FROM empleado
+                 WHERE id_departamento IS NOT NULL); -- la columna id_departamento tiene valores null, si no ponemos esto no nos devuelve nada
+
 # 1.2.7.3 Subconsultas con IN y NOT IN
 # 8. Devuelve los nombres de los departamentos que tienen empleados asociados. (Utilizando IN o NOT IN).
-#
+SELECT nombre
+FROM departamento
+WHERE id IN (SELECT id_departamento FROM empleado);
+
 # 9. Devuelve los nombres de los departamentos que no tienen empleados asociados. (Utilizando IN o NOT IN).
-#
+SELECT nombre
+FROM departamento
+WHERE id NOT IN (SELECT id_departamento
+                 FROM empleado
+                 WHERE id_departamento IS NOT NULL);
+
 # 1.2.7.4 Subconsultas con EXISTS y NOT EXISTS
 # 10. Devuelve los nombres de los departamentos que tienen empleados asociados. (Utilizando EXISTS o NOT EXISTS).
-#
+
 # 11. Devuelve los nombres de los departamentos que tienen empleados asociados. (Utilizando EXISTS o NOT EXISTS).

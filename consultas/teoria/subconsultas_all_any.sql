@@ -7,20 +7,19 @@
 #
 ## 1. El operador ALL (Todos)
 # La condición se cumple solo si la comparación es verdadera para todos los elementos de la lista.
-#     > ALL: El valor debe ser mayor que el máximo del conjunto.
-#     < ALL: El valor debe ser menor que el mínimo del conjunto.
+#     > ALL: El valor debe ser mayor que el máximo del conjunto que devuelve la subconsulta
+#     = ALL: El valor debe ser menor que el mínimo del conjunto que devuelve la subconsulta.
 #
 # Ejemplo práctico:
-# "Queremos encontrar los productos cuyo precio sea mayor que el precio de todos los productos del fabricante 'Lenovo'
+# "Queremos encontrar los productos cuyo precio sea mayor que el precio de todos los productos del fabricante 'Hewlett-Packard'
 use tienda;
 SELECT p.nombre, p.precio, f.nombre
 FROM producto p join fabricante f on p.id_fabricante = f.id
 WHERE precio > ALL (
      SELECT precio
      FROM producto
-     WHERE id_fabricante = (SELECT id FROM fabricante WHERE nombre = 'Hewlett-Packard')
+     WHERE p.id_fabricante = (SELECT id FROM fabricante WHERE nombre = 'Hewlett-Packard')
  );
-
 
 # 2. El operador ANY / (Cualquiera, alguno)
 # La condición se cumple si la comparación es verdadera para al menos uno de los elementos de la lista.

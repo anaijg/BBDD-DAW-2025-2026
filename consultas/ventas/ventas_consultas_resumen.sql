@@ -106,8 +106,26 @@ group by c.id;
 +--+-------+---------+---------+------------+
  */
 # 11. Devuelve un listado con el identificador de cliente, nombre y apellidos y el número total de pedidos que ha realizado cada uno de clientes. Tenga en cuenta que pueden existir clientes que no han realizado ningún pedido. Estos clientes también deben aparecer en el listado indicando que el número de pedidos realizados es 0.
-
-
+select c.id, c.nombre, c.apellido1, ifnull(c.apellido2, '') as apellido2, ifnull(count(p.id), 0) as num_pedidos
+    from cliente c left join pedido p on c.id = p.id_cliente
+group by c.id;
+/*
+ +--+---------+---------+---------+-----------+
+|id|nombre   |apellido1|apellido2|num_pedidos|
++--+---------+---------+---------+-----------+
+|1 |Aarón    |Rivero   |Gómez    |3          |
+|2 |Adela    |Salas    |Díaz     |3          |
+|3 |Adolfo   |Rubio    |Flores   |1          |
+|4 |Adrián   |Suárez   |         |1          |
+|5 |Marcos   |Loyola   |Méndez   |2          |
+|6 |María    |Santana  |Moreno   |2          |
+|7 |Pilar    |Ruiz     |         |1          |
+|8 |Pepe     |Ruiz     |Santana  |3          |
+|9 |Guillermo|López    |Gómez    |0          |
+|10|Daniel   |Santana  |Loyola   |0          |
++--+---------+---------+---------+-----------+
+ */
+    
 # 12. Devuelve un listado con el identificador de cliente, nombre y apellidos y el número total de pedidos que ha realizado cada uno de clientes durante el año 2017.
 select c.id, c.nombre, c.apellido1, c.apellido2, count(p.id)
 from cliente as c

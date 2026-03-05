@@ -32,33 +32,76 @@ where precio = (select max(precio)
 select nombre
 from producto
 where precio =
-(select min(precio)
-from producto
-where id_fabricante = (select id
-                       from fabricante
-                       where nombre = 'Hewlett-Packard')
-  and id_fabricante = (select id
-                       from fabricante
-                       where nombre = 'Hewlett-Packard'));
+      (select min(precio)
+       from producto
+       where id_fabricante = (select id
+                              from fabricante
+                              where nombre = 'Hewlett-Packard')
+         and id_fabricante = (select id
+                              from fabricante
+                              where nombre = 'Hewlett-Packard'));
 
 # 5. Devuelve todos los productos de la base de datos que tienen un precio mayor o igual al producto más caro del fabricante Lenovo.
-#
+SELECT *
+FROM producto
+WHERE precio >=
+      (SELECT MAX(precio)
+       FROM producto
+       WHERE id_fabricante = (SELECT id
+                              FROM fabricante
+                              WHERE nombre = 'Lenovo'));
+
 # 6. Lista todos los productos del fabricante Asus que tienen un precio superior al precio medio de todos sus productos.
-# 
+SELECT *
+FROM producto
+WHERE id_fabricante = (SELECT id
+                       FROM fabricante
+                       WHERE nombre = 'Asus')
+  AND precio > (SELECT AVG(precio)
+                FROM producto
+                WHERE id_fabricante = (SELECT id_fabricante
+                                       FROM fabricante
+                                       WHERE nombre = 'Asus'));
+
 # 1.1.7.2 Subconsultas con ALL y ANY
 # 7. Devuelve el producto más caro que existe en la tabla producto sin hacer uso de MAX, ORDER BY ni LIMIT.
-#
+SELECT nombre
+FROM producto
+WHERE precio >= ALL (SELECT precio
+                     FROM producto);
+
 # 8. Devuelve el producto más barato que existe en la tabla producto sin hacer uso de MIN, ORDER BY ni LIMIT.
-#
+SELECT nombre
+FROM producto
+WHERE precio <= ALL (SELECT precio
+                     FROM producto);
+
 # 9. Devuelve los nombres de los fabricantes que tienen productos asociados. (Utilizando ALL o ANY).
-#
+SELECT nombre
+FROM fabricante
+WHERE id = ANY(SELECT id_fabricante
+               FROM producto);
+
 # 10. Devuelve los nombres de los fabricantes que no tienen productos asociados. (Utilizando ALL o ANY).
-#
+SELECT nombre
+FROM fabricante
+WHERE id != ALL(SELECT id_fabricante
+               FROM producto);
+
+
 # 1.1.7.3 Subconsultas con IN y NOT IN
 # 11. Devuelve los nombres de los fabricantes que tienen productos asociados. (Utilizando IN o NOT IN).
-#
+SELECT nombre
+FROM fabricante
+WHERE id IN (SELECT id_fabricante
+               FROM producto);
+
 # 12. Devuelve los nombres de los fabricantes que no tienen productos asociados. (Utilizando IN o NOT IN).
-#
+SELECT nombre
+FROM fabricante
+WHERE id NOT IN (SELECT id_fabricante
+               FROM producto);
+
 # 1.1.7.4 Subconsultas con EXISTS y NOT EXISTS
 # 13. Devuelve los nombres de los fabricantes que tienen productos asociados. (Utilizando EXISTS o NOT EXISTS).
 #
