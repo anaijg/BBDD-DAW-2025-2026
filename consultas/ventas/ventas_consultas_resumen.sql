@@ -125,7 +125,7 @@ group by c.id;
 |10|Daniel   |Santana  |Loyola   |0          |
 +--+---------+---------+---------+-----------+
  */
-    
+
 # 12. Devuelve un listado con el identificador de cliente, nombre y apellidos y el número total de pedidos que ha realizado cada uno de clientes durante el año 2017.
 select c.id, c.nombre, c.apellido1, c.apellido2, count(p.id)
 from cliente as c
@@ -144,9 +144,18 @@ group by c.id;
 
  */
 # 13. Devuelve un listado que muestre el identificador de cliente, nombre, primer apellido y el valor de la máxima cantidad del pedido realizado por cada uno de los clientes. El resultado debe mostrar aquellos clientes que no han realizado ningún pedido indicando que la máxima cantidad de sus pedidos realizados es 0. Puede hacer uso de la función IFNULL.
-
+select  c.id, c.nombre, c.apellido1, ifnull(max(p.total), 0)
+    from cliente c left join pedido p on c.id = p.id_cliente
+group by c.id;
 
 # 14. Devuelve cuál ha sido el pedido de máximo valor que se ha realizado cada año.
-
+select year(fecha) as año,max(total) as maximo_pedido
+    from pedido
+group by año
+order by año;
 
 # 15. Devuelve el número total de pedidos que se han realizado cada año.
+select year(fecha) as año, count(id) as numero_pedidos
+from pedido
+group by año
+order by año;

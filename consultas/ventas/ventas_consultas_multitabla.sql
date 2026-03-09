@@ -1,3 +1,4 @@
+use ventas;
 # 1.3.4 Consultas multitabla (Composición interna)
 # Resuelva todas las consultas utilizando la sintaxis de SQL1 y SQL2.
 
@@ -16,16 +17,43 @@
 # 7. Devuelve el nombre de todos los clientes que han realizado algún pedido con el comercial Daniel Sáez Vega.
 #
 # 1.3.5 Consultas multitabla (Composición externa)
-# 1. Resuelva todas las consultas utilizando las cláusulas LEFT JOIN y RIGHT JOIN.
+# Resuelva todas las consultas utilizando las cláusulas LEFT JOIN y RIGHT JOIN.
 #id_departamento
-# 2. Devuelve un listado con todos los clientes junto con los datos de los pedidos que han realizado. Este listado también debe incluir los clientes que no han realizado ningún pedido. El listado debe estar ordenado alfabéticamente por el primer apellido, segundo apellido y nombre de los clientes.
-#
-# 3. Devuelve un listado con todos los comerciales junto con los datos de los pedidos que han realizado. Este listado también debe incluir los comerciales que no han realizado ningún pedido. El listado debe estar ordenado alfabéticamente por el primer apellido, segundo apellido y nombre de los comerciales.
 
-# 4. Devuelve un listado que solamente muestre los clientes que no han realizado ningún pedido.
+# 1. Devuelve un listado con todos los clientes junto con los datos de los pedidos que han realizado. Este listado también debe incluir los clientes que no han realizado ningún pedido. El listado debe estar ordenado alfabéticamente por el primer apellido, segundo apellido y nombre de los clientes.
+select distinct c.apellido1, c.apellido2, c.nombre
+from cliente c
+         left join pedido p on c.id = p.id_cliente
+order by c.apellido1, c.apellido2, c.nombre;
+# 2. Devuelve un listado con todos los comerciales junto con los datos de los pedidos que han realizado. Este listado también debe incluir los comerciales que no han realizado ningún pedido. El listado debe estar ordenado alfabéticamente por el primer apellido, segundo apellido y nombre de los comerciales.
+select c.apellido1, c.apellido2, c.nombre, p.*
+from comercial c
+         left join pedido p on c.id = p.id_comercial
+order by c.apellido1, c.apellido2, c.nombre;
+# 3. Devuelve un listado que solamente muestre los clientes que no han realizado ningún pedido.
+select distinct c.apellido1, c.apellido2, c.nombre, p.id
+from cliente c
+         left join pedido p on c.id = p.id_cliente
+where p.id is null
+order by c.apellido1, c.apellido2, c.nombre;
 
-# 5. Devuelve un listado que solamente muestre los comerciales que no han realizado ningún pedido.
 
-# 6. Devuelve un listado con los clientes que no han realizado ningún pedido y de los comerciales que no han participado en ningún pedido. Ordene el listado alfabéticamente por los apellidos y el nombre. En en listado deberá diferenciar de algún modo los clientes y los comerciales.
+# 4. Devuelve un listado que solamente muestre los comerciales que no han realizado ningún pedido.
+select c.apellido1, c.apellido2, c.nombre, p.*
+from comercial c
+         left join pedido p on c.id = p.id_comercial
+where p.id is null
+order by c.apellido1, c.apellido2, c.nombre;
 
-# 7. ¿Se podrían realizar las consultas anteriores con NATURAL LEFT JOIN o NATURAL RIGHT JOIN? Justifique su respuesta.
+# 5. Devuelve un listado con los clientes que no han realizado ningún pedido y de los comerciales que no han participado en ningún pedido. Ordene el listado alfabéticamente por los apellidos y el nombre. En en listado deberá diferenciar de algún modo los clientes y los comerciales.
+(select distinct c.apellido1, c.apellido2, c.nombre, p.*
+from cliente c
+         left join pedido p on c.id = p.id_cliente
+where p.id is null
+order by c.apellido1, c.apellido2, c.nombre)
+union
+(select c.apellido1, c.apellido2, c.nombre, p.*
+from comercial c
+         left join pedido p on c.id = p.id_comercial
+where p.id is null
+order by c.apellido1, c.apellido2, c.nombre);
