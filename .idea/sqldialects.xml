@@ -5,6 +5,8 @@
     <file url="file://$PROJECT_DIR$/consultas/empleados/empleados_consultas_resumen.sql" dialect="MySQL" />
     <file url="file://$PROJECT_DIR$/consultas/empleados/empleados_consultas_una_tabla.sql" dialect="MySQL" />
     <file url="file://$PROJECT_DIR$/consultas/empleados/empleados_subconsultas.sql" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/consultas/jardineria/jardineria_consultas_resumen.sql" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/consultas/jardineria/jardineria_unitabla.sql" dialect="MySQL" />
     <file url="file://$PROJECT_DIR$/consultas/teoria/consultas_multitabla.sql" dialect="MySQL" />
     <file url="file://$PROJECT_DIR$/consultas/teoria/consultas_resumen.sql" dialect="MySQL" />
     <file url="file://$PROJECT_DIR$/consultas/teoria/ifnull.sql" dialect="MySQL" />
