@@ -1,33 +1,114 @@
 # 1.4.5 Consultas multitabla (Composición interna)
 # Resuelva todas las consultas utilizando la sintaxis de SQL1 y SQL2. Las consultas con sintaxis de SQL2 se deben resolver con INNER JOIN y NATURAL JOIN.
-#
+use jardineria;
 # 1. Obtén un listado con el nombre de cada cliente y el nombre y apellido de su representante de ventas.
-#
+SELECT c.nombre_cliente, e.nombre, e.apellido1, e.apellido2
+FROM cliente as c
+         INNER JOIN empleado as e ON c.codigo_empleado_rep_ventas = e.codigo_empleado;
+-- 36 rows
 # 2. Muestra el nombre de los clientes que hayan realizado pagos junto con el nombre de sus representantes de ventas.
-#
+SELECT DISTINCT c.nombre_cliente, e.nombre
+FROM cliente c
+         INNER JOIN empleado e on c.codigo_empleado_rep_ventas = e.codigo_empleado
+         INNER JOIN pago p on c.codigo_cliente = p.codigo_cliente;
+-- 18 rows
+
 # 3. Muestra el nombre de los clientes que no hayan realizado pagos junto con el nombre de sus representantes de ventas.
-#
+-- Opción 1
+SELECT DISTINCT c.nombre_cliente,
+                CONCAT(e.nombre, ' ', e.apellido1) AS representante
+FROM cliente c
+         JOIN empleado e ON c.codigo_empleado_rep_ventas = e.codigo_empleado
+WHERE c.codigo_cliente NOT IN (SELECT DISTINCT codigo_cliente
+                               FROM pago);
+
+-- Opción 2
+SELECT DISTINCT c.nombre_cliente,
+                CONCAT(e.nombre, ' ', e.apellido1) AS representante
+FROM cliente c
+         JOIN empleado e ON c.codigo_empleado_rep_ventas = e.codigo_empleado
+         LEFT JOIN pago p ON c.codigo_cliente = p.codigo_cliente
+WHERE p.total IS NULL;
+
+-- Opción 3
+SELECT DISTINCT c.nombre_cliente,
+                CONCAT(e.nombre, ' ', e.apellido1) AS representante
+FROM cliente c
+         JOIN empleado e ON c.codigo_empleado_rep_ventas = e.codigo_empleado
+WHERE NOT EXISTS(SELECT 1 FROM pago p WHERE p.codigo_cliente = c.codigo_cliente);
+
 # 4. Devuelve el nombre de los clientes que han hecho pagos y el nombre de sus representantes junto con la ciudad de la oficina a la que pertenece el representante.
-#
+SELECT DISTINCT c.nombre_cliente, e.nombre, o.ciudad
+FROM cliente AS c
+         INNER JOIN empleado AS e ON c.codigo_empleado_rep_ventas = e.codigo_empleado
+         INNER JOIN pago as p ON p.codigo_cliente = c.codigo_cliente
+         INNER JOIN oficina as o ON o.codigo_oficina = e.codigo_oficina;
+-- 18 rows
+
 # 5. Devuelve el nombre de los clientes que no hayan hecho pagos y el nombre de sus representantes junto con la ciudad de la oficina a la que pertenece el representante.
-#
+-- El p.total no lo piden pero como Álvaro lo ha puesto con to-do su cariño lo dejamos
+SELECT DISTINCT c.nombre_cliente,
+                e.nombre,
+                o.ciudad,
+                IFNULL(
+                        p.total
+                    , 0) AS total
+FROM cliente AS c
+         INNER JOIN empleado AS e ON c.codigo_empleado_rep_ventas = e.codigo_empleado
+         INNER JOIN oficina AS o ON e.codigo_oficina = o.codigo_oficina
+         LEFT JOIN pago AS p ON c.codigo_cliente = p.codigo_cliente
+WHERE p.total IS NULL;
+-- 17 rows
+
 # 6. Lista la dirección de las oficinas que tengan clientes en Fuenlabrada.
-#
+SELECT DISTINCT o.linea_direccion1, o.linea_direccion2, o.ciudad
+FROM oficina o
+         JOIN empleado e ON o.codigo_oficina = e.codigo_oficina
+         JOIN cliente c ON e.codigo_empleado = c.codigo_empleado_rep_ventas
+WHERE c.ciudad = 'Fuenlabrada';
+-- 3 rows
+
 # 7. Devuelve el nombre de los clientes y el nombre de sus representantes junto con la ciudad de la oficina a la que pertenece el representante.
-#
+SELECT DISTINCT c.nombre_cliente, e.nombre, o.ciudad
+FROM cliente AS c
+         INNER JOIN empleado AS e ON c.codigo_empleado_rep_ventas = e.codigo_empleado
+         INNER JOIN oficina AS o ON e.codigo_oficina = o.codigo_oficina;
+-- 35 rows
 # 8. Devuelve un listado con el nombre de los empleados junto con el nombre de sus jefes.
-#
+SELECT jefe.nombre AS jefe_de, subordinado.nombre AS empleado
+FROM empleado AS jefe
+         JOIN empleado AS subordinado ON jefe.codigo_empleado = subordinado.codigo_jefe;
+-- 30 rows
+
+SELECT IFNULL(e1.nombre, 'no tiene jefe') AS jefe_de, e2.nombre AS empleado
+FROM empleado AS e1
+         RIGHT JOIN empleado e2 ON e1.codigo_empleado = e2.codigo_jefe;
+-- 31 rows
 # 9. Devuelve un listado que muestre el nombre de cada empleados, el nombre de su jefe y el nombre del jefe de sus jefe.
-#
+SELECT DISTINCT CONCAT(e.nombre, ' ', e.apellido1)   AS empleado,
+                CONCAT(j.nombre, ' ', j.apellido1)   AS jefe,
+                CONCAT(jj.nombre, ' ', jj.apellido1) AS jefe_del_jefe
+FROM empleado e
+         JOIN empleado j ON e.codigo_jefe = j.codigo_empleado
+         JOIN empleado jj ON j.codigo_jefe = jj.codigo_empleado;
+-- 29 rows
 # 10. Devuelve el nombre de los clientes a los que no se les ha entregado a tiempo un pedido.
-#
+select distinct nombre_cliente
+    from cliente c inner join pedido p on c.codigo_cliente = p.codigo_cliente
+where fecha_esperada < fecha_entrega ;
+-- 15 rows
 # 11. Devuelve un listado de las diferentes gamas de producto que ha comprado cada cliente.
+SELECT DISTINCT c.nombre_cliente, pr.gama
+FROM cliente AS c
+         JOIN pedido AS p ON c.codigo_cliente = p.codigo_cliente
+         JOIN detalle_pedido AS d ON p.codigo_pedido = d.codigo_pedido
+         INNER JOIN producto AS pr ON d.codigo_producto = pr.codigo_producto;
 
 # 1.4.6 Consultas multitabla (Composición externa)
 # Resuelva todas las consultas utilizando las cláusulas LEFT JOIN, RIGHT JOIN, NATURAL LEFT JOIN y NATURAL RIGHT JOIN.
 #
 # 1. Devuelve un listado que muestre solamente los clientes que no han realizado ningún pago.
-#
+
 # 2. Devuelve un listado que muestre solamente los clientes que no han realizado ningún pedido.
 #
 # 3. Devuelve un listado que muestre los clientes que no han realizado ningún pago y los que no han realizado ningún pedido.

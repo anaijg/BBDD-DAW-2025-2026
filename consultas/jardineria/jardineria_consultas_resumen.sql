@@ -141,11 +141,39 @@ SELECT SUM(precio_unidad * cantidad)                                        AS b
        SUM(precio_unidad * cantidad) + SUM(precio_unidad * cantidad) * 0.21 AS total_facturado
 FROM detalle_pedido;
 # 16. La misma información que en la pregunta anterior, pero agrupada por código de producto.
-#
+SELECT codigo_producto,
+       SUM(precio_unidad * cantidad)        AS base_imponible,
+       SUM(precio_unidad * cantidad) * 0.21 AS iva,
+       SUM(precio_unidad * cantidad) * 1.21 AS total_facturado
+FROM detalle_pedido
+GROUP BY codigo_producto;
 # 17. La misma información que en la pregunta anterior, pero agrupada por código de producto filtrada por los códigos que empiecen por OR.
-#
+SELECT codigo_producto,
+       SUM(precio_unidad * cantidad)        AS base_imponible,
+       SUM(precio_unidad * cantidad) * 0.21 AS iva,
+       SUM(precio_unidad * cantidad) * 1.21 AS total_facturado
+FROM detalle_pedido
+WHERE codigo_producto LIKE 'OR%'
+GROUP BY codigo_producto;
+
+SELECT codigo_producto,
+       SUM(precio_unidad * cantidad)        AS base_imponible,
+       SUM(precio_unidad * cantidad) * 0.21 AS iva,
+       SUM(precio_unidad * cantidad) * 1.21 AS total_facturado
+FROM detalle_pedido
+GROUP BY codigo_producto
+HAVING codigo_producto LIKE 'OR%';
 # 18. Lista las ventas totales de los productos que hayan facturado más de 3000 euros. Se mostrará el nombre, unidades vendidas, total facturado y total facturado con impuestos (21% IVA).
-#
+SELECT pr.nombre,
+       SUM(dp.cantidad)                          AS unidades_vendidas,
+       SUM(dp.cantidad * pr.precio_venta)        AS total_facturado,
+       SUM(dp.cantidad * pr.precio_venta) * 1.21 AS total_con_iva
+FROM producto pr
+         JOIN detalle_pedido dp
+              ON pr.codigo_producto = dp.codigo_producto
+GROUP BY pr.codigo_producto, pr.nombre
+having SUM(dp.cantidad * pr.precio_venta) > 3000;
+
 # 19. Muestre la suma total de todos los pagos que se realizaron para cada uno de los años que aparecen en la tabla pagos.
 SELECT YEAR(fecha_pago) AS año, SUM(total) AS suma_total_pagos
 FROM pago
