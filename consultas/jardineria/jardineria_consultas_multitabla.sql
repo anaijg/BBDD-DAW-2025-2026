@@ -94,8 +94,9 @@ FROM empleado e
 -- 29 rows
 # 10. Devuelve el nombre de los clientes a los que no se les ha entregado a tiempo un pedido.
 select distinct nombre_cliente
-    from cliente c inner join pedido p on c.codigo_cliente = p.codigo_cliente
-where fecha_esperada < fecha_entrega ;
+from cliente c
+         inner join pedido p on c.codigo_cliente = p.codigo_cliente
+where fecha_esperada < fecha_entrega;
 -- 15 rows
 # 11. Devuelve un listado de las diferentes gamas de producto que ha comprado cada cliente.
 SELECT DISTINCT c.nombre_cliente, pr.gama
@@ -108,25 +109,64 @@ FROM cliente AS c
 # Resuelva todas las consultas utilizando las cláusulas LEFT JOIN, RIGHT JOIN, NATURAL LEFT JOIN y NATURAL RIGHT JOIN.
 #
 # 1. Devuelve un listado que muestre solamente los clientes que no han realizado ningún pago.
+SELECT c.nombre_cliente
+FROM cliente c
+         LEFT JOIN pago p ON c.codigo_cliente = p.codigo_cliente
+WHERE p.codigo_cliente IS NULL;
+
+SELECT nombre_cliente
+FROM cliente
+WHERE codigo_cliente NOT IN (SELECT DISTINCT codigo_cliente FROM pago);
 
 # 2. Devuelve un listado que muestre solamente los clientes que no han realizado ningún pedido.
-#
+SELECT c.nombre_cliente
+FROM cliente c
+         LEFT JOIN pedido p ON c.codigo_cliente = p.codigo_cliente
+WHERE p.codigo_cliente IS NULL;
+
+SELECT nombre_cliente
+FROM cliente
+WHERE codigo_cliente NOT IN (SELECT codigo_cliente FROM pedido);
+
 # 3. Devuelve un listado que muestre los clientes que no han realizado ningún pago y los que no han realizado ningún pedido.
-#
+# Solamente deben aparecer si no han hecho ni pedido, ni pago
+SELECT DISTINCT c.nombre_cliente
+FROM cliente c LEFT JOIN pago pa ON c.codigo_cliente = pa.codigo_cliente
+LEFT JOIN pedido pe ON c.codigo_cliente = pe.codigo_cliente
+WHERE pa.codigo_cliente IS NULL AND pe.codigo_cliente IS NULL;
+
 # 4. Devuelve un listado que muestre solamente los empleados que no tienen una oficina asociada.
-#
+SELECT e.nombre, e.apellido1
+    FROM empleado e LEFT JOIN oficina o ON e.codigo_oficina = o.codigo_oficina
+    WHERE e.codigo_oficina IS NULL;
+
+SELECT nombre, apellido1
+    FROM empleado
+WHERE codigo_oficina NOT IN (SELECT codigo_oficina FROM oficina);
+
 # 5. Devuelve un listado que muestre solamente los empleados que no tienen un cliente asociado.
-#
+SELECT e.nombre, e.apellido1
+    FROM empleado e LEFT JOIN cliente c ON e.codigo_empleado = c.codigo_empleado_rep_ventas
+    WHERE c.codigo_empleado_rep_ventas IS NULL;
+
+SELECT nombre, apellido1
+    FROM empleado
+WHERE codigo_empleado NOT IN (SELECT codigo_empleado_rep_ventas FROM cliente);
+
 # 6. Devuelve un listado que muestre solamente los empleados que no tienen un cliente asociado junto con los datos de la oficina donde trabajan.
-#
+SELECT DISTINCT e.nombre, e.apellido1, o.*
+    FROM empleado e LEFT JOIN cliente c ON e.codigo_empleado = c.codigo_empleado_rep_ventas
+    INNER JOIN oficina o ON e.codigo_oficina = o.codigo_oficina
+    WHERE c.codigo_empleado_rep_ventas IS NULL;
+
 # 7. Devuelve un listado que muestre los empleados que no tienen una oficina asociada y los que no tienen un cliente asociado.
-#
+
 # 8. Devuelve un listado de los productos que nunca han aparecido en un pedido.
-#
+
 # 9. Devuelve un listado de los productos que nunca han aparecido en un pedido. El resultado debe mostrar el nombre, la descripción y la imagen del producto.
-#
+
 # 10. Devuelve las oficinas donde no trabajan ninguno de los empleados que hayan sido los representantes de ventas de algún cliente que haya realizado la compra de algún producto de la gama Frutales.
-#
+
 # 11. Devuelve un listado con los clientes que han realizado algún pedido pero no han realizado ningún pago.
-#
+
 # 12. Devuelve un listado con los datos de los empleados que no tienen clientes asociados y el nombre de su jefe asociado.
