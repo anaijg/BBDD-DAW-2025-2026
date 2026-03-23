@@ -115,14 +115,49 @@ WHERE e.codigo_empleado NOT IN (SELECT codigo_empleado_rep_ventas
                                 WHERE codigo_empleado_rep_ventas IS NOT NULL);
 
 # 16. Devuelve las oficinas donde no trabajan ninguno de los empleados que hayan sido los representantes de ventas de algún cliente que haya realizado la compra de algún producto de la gama Frutales.
-#
+SELECT *
+FROM oficina
+WHERE codigo_oficina NOT IN (SELECT codigo_oficina
+                             FROM empleado
+                             WHERE codigo_empleado IN (SELECT codigo_empleado_rep_ventas
+                                                       FROM cliente
+                                                       WHERE codigo_cliente IN (SELECT codigo_cliente
+                                                                                FROM pedido
+                                                                                WHERE codigo_pedido IN
+                                                                                      (SELECT codigo_pedido
+                                                                                       FROM detalle_pedido
+                                                                                       WHERE codigo_producto IN
+                                                                                             (SELECT codigo_producto
+                                                                                              FROM producto
+                                                                                              WHERE gama = 'Frutales')))));
+
 # 17. Devuelve un listado con los clientes que han realizado algún pedido pero no han realizado ningún pago.
-#
+SELECT *
+FROM cliente
+WHERE codigo_cliente IN (SELECT codigo_cliente FROM pedido)
+  AND codigo_cliente NOT IN (SELECT codigo_cliente FROM pago);
+
 # 1.4.8.4 Subconsultas con EXISTS y NOT EXISTS
 # 18. Devuelve un listado que muestre solamente los clientes que no han realizado ningún pago.
-#
+SELECT *
+FROM cliente c
+WHERE NOT EXISTS (SELECT 1
+                  FROM pago p
+                  WHERE p.codigo_cliente = c.codigo_cliente);
+  
 # 19. Devuelve un listado que muestre solamente los clientes que sí han realizado algún pago.
-#
+SELECT *
+FROM cliente c
+WHERE EXISTS (SELECT 1
+              FROM pago p
+              WHERE p.codigo_cliente = c.codigo_cliente);
+
 # 20. Devuelve un listado de los productos que nunca han aparecido en un pedido.
-#
+SELECT *
+FROM producto p
+WHERE NOT EXISTS (SELECT 1 FROM detalle_pedido dp WHERE dp.codigo_producto = p.codigo_producto);
+
 # 21. Devuelve un listado de los productos que han aparecido en un pedido alguna vez.
+SELECT *
+FROM producto p
+WHERE EXISTS (SELECT 1 FROM detalle_pedido dp WHERE dp.codigo_producto = p.codigo_producto);
