@@ -40,23 +40,49 @@ ORDER BY SUM(cantidad)  DESC
 LIMIT 1;
 
 # 4. Los clientes cuyo límite de crédito sea mayor que los pagos que haya realizado. (Sin utilizar INNER JOIN).
+SELECT nombre_cliente
+FROM cliente c
+WHERE limite_credito > COALESCE((SELECT SUM(total)
+                                 FROM pago p
+                                 WHERE p.codigo_cliente = c.codigo_cliente), 0);
 
 # 5. Devuelve el producto que más unidades tiene en stock.
+SELECT nombre
+FROM producto
+WHERE cantidad_en_stock = (SELECT MAX(cantidad_en_stock) FROM producto);
 
 # 6. Devuelve el producto que menos unidades tiene en stock.
+SELECT nombre
+FROM producto
+WHERE cantidad_en_stock = (SELECT MIN(cantidad_en_stock) FROM producto);
 
 # 7. Devuelve el nombre, los apellidos y el email de los empleados que están a cargo de Alberto Soria.
-#
+SELECT nombre, apellido1, apellido2, email
+FROM empleado
+WHERE codigo_jefe = (SELECT codigo_empleado
+                     FROM empleado
+                     WHERE nombre = 'Alberto'
+                       AND apellido1 = 'Soria');
+
 # 1.4.8.2 Subconsultas con ALL y ANY
 # 8. Devuelve el nombre del cliente con mayor límite de crédito.
-#
+SELECT nombre_cliente
+FROM cliente
+WHERE limite_credito >= ALL (SELECT limite_credito FROM cliente WHERE limite_credito IS NOT NULL);
+
 # 9. Devuelve el nombre del producto que tenga el precio de venta más caro.
-#
+SELECT nombre
+FROM producto
+WHERE precio_venta >= ALL (SELECT precio_venta FROM producto WHERE precio_venta IS NOT NULL);
+
 # 10. Devuelve el producto que menos unidades tiene en stock.
-#
+SELECT nombre
+FROM producto
+WHERE cantidad_en_stock <= ALL (SELECT cantidad_en_stock FROM producto);
+  
 # 1.4.8.3 Subconsultas con IN y NOT IN
 # 11. Devuelve el nombre, apellido1 y cargo de los empleados que no representen a ningún cliente.
-#
+
 # 12. Devuelve un listado que muestre solamente los clientes que no han realizado ningún pago.
 #
 # 13. Devuelve un listado que muestre solamente los clientes que sí han realizado algún pago.
