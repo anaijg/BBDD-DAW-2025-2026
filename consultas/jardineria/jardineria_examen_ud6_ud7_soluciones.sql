@@ -115,6 +115,7 @@ SELECT SUM(cantidad_en_stock) AS stock_total_herramientas
 FROM producto p
 WHERE gama = 'Herramientas';
 
+
 # 15. Muestra el código de la oficina y el número de empleados que tiene cada una, pero solo de aquellas oficinas que tengan más de 4 empleados.
 # (1 row)
 SELECT codigo_oficina, COUNT(*) AS num_empleados
