@@ -42,9 +42,26 @@ end SS
 
 -- en la llamada, pones el nombre del parámetro OUT con un @
 CALL contar_productos('Frutales', @total);
+SELECT @total;
 
 -- Ejemplo 3 - dentro de una nueva base de datos test, crea el procedimiento calcular_area_circulo: recibe como entrada el radio de un círculo y devuelve como salida el área del círculo
 -- area = pi * radio al cuadrado
+DROP DATABASE IF EXISTS test;
+CREATE DATABASE test;
+USE test;
+
+DELIMITER $$
+DROP PROCEDURE IF EXISTS calcular_area_circulo;
+CREATE PROCEDURE calcular_area_circulo(
+    IN radio DOUBLE,
+    OUT area DOUBLE
+)
+BEGIN
+    SET area = (PI() * POW(radio, 2));
+end $$
+
+CALL calcular_area_circulo(1, @area);
+SELECT @area;
 
 -- Ejemplo 4 - dentro de la base de datos test, crea un procedimiento  calcular_volumen_cilindro: recibe como entrada el radio y la altura, y devuelve como salida el volumen del cilindro; el procedimiento hace uso del procedimiento calcular_area_circulo
 -- volumen = area * altura
