@@ -1,12 +1,12 @@
 USE jardineria;
 
 -- Pasos:
-    -- 1) DELIMITER
-    -- 2) DROP PROCEDURE
-    -- 3) CREATE PROCEDURE... BEGIN...END (sin rellenar nada)
-    -- 4) Pienso / diseño el contenido del procedimiento, y "lo relleno"
-    -- 5) Ejecutamos el CREATE PROCEDURE (se nos guarda en routines)
-    -- 6) Llamamos al procedimiento con CALL
+-- 1) DELIMITER
+-- 2) DROP PROCEDURE
+-- 3) CREATE PROCEDURE... BEGIN...END (sin rellenar nada)
+-- 4) Pienso / diseño el contenido del procedimiento, y "lo relleno"
+-- 5) Ejecutamos el CREATE PROCEDURE (se nos guarda en routines)
+-- 6) Llamamos al procedimiento con CALL
 
 -- Ejemplo 1: procedimiento que lista los productos de la ga
 DELIMITER $$
@@ -17,7 +17,8 @@ CREATE PROCEDURE listar_productos(
 BEGIN
     -- DENTRO DE BEGIN METEMOS EL CÓDIGO SQL (O NO) QUE QUEREMOS QUE HAGA
     SELECT *
-        FROM producto p WHERE p.gama = gama;
+    FROM producto p
+    WHERE p.gama = gama;
 end $$
 
 -- al ejecutar lo anterior, se nos guarda el procedimiento, pero el código, la consulta, no se ejecuta porque no lo estamos llamando
@@ -65,3 +66,44 @@ SELECT @area;
 
 -- Ejemplo 4 - dentro de la base de datos test, crea un procedimiento  calcular_volumen_cilindro: recibe como entrada el radio y la altura, y devuelve como salida el volumen del cilindro; el procedimiento hace uso del procedimiento calcular_area_circulo
 -- volumen = area * altura
+DELIMITER $$
+DROP PROCEDURE IF EXISTS calcular_volumen_cilindro;
+CREATE PROCEDURE calcular_volumen_cilindro(
+    IN radio DOUBLE,
+    IN altura DOUBLE,
+    OUT volumen DOUBLE
+)
+BEGIN
+    CALL calcular_area_circulo(radio, @area);
+    SET volumen = @area * altura;
+end $$
+
+CALL calcular_volumen_cilindro(4.5, 6, @volumen);
+SELECT @volumen;
+
+-- Ejemplo 5. Procedimiento calcular_max_min_media
+-- recibe: gama del producto
+-- devuelve: precio máximo
+--           precio mínimo
+--           precio medio
+-- de los productos de esa gama
+USE jardineria;
+DELIMITER $$
+DROP PROCEDURE IF EXISTS calcular_max_min_media;
+CREATE PROCEDURE calcular_max_min_media(
+    IN gama VARCHAR(50),
+    OUT precio_maximo DECIMAL(15,2),
+    OUT precio_minimo DECIMAL(15,2),
+    OUT precio_medio DECIMAL(15, 2)
+)
+BEGIN
+    SET precio_maximo = (SELECT MAX(precio_venta)
+        FROM producto p WHERE p.gama = gama);
+    SET precio_minimo = (SELECT MIN(precio_venta)
+        FROM producto p WHERE p.gama = gama);
+    SET precio_medio = (SELECT AVG(precio_venta)
+        FROM producto p WHERE p.gama = gama);
+end $$
+
+CALL calcular_max_min_media('Herramientas', @precio_maximo, @precio_minimo, @precio_medio);
+SELECT ROUND(@precio_maximo, 2), @precio_minimo, @precio_medio;
