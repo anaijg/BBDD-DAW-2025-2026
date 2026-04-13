@@ -1,3 +1,7 @@
+###############################################################
+# EJEMPLOS PROCEDIMIENTOS       ###############################
+###############################################################
+
 USE jardineria;
 
 -- Pasos:
@@ -107,3 +111,36 @@ end $$
 
 CALL calcular_max_min_media('Herramientas', @precio_maximo, @precio_minimo, @precio_medio);
 SELECT ROUND(@precio_maximo, 2), @precio_minimo, @precio_medio;
+
+
+###############################################################
+# EJEMPLOS FUNCIONES            ###############################
+###############################################################
+
+-- Pasos:
+-- 1) DELIMITER
+-- 2) DROP FUNCTION IF EXISTS
+-- 3) CREATE FUNCTION...
+-- 4) RETURNS tipo_de_dato_que_devuelve
+-- 5) DETERMINISTIC | CONTAINS SQL | NO SQL | MODIFIES SQL DATA | READS SQL DATA
+-- 5) BEGIN...
+-- 6) Pienso / diseño el contenido del procedimiento, y "lo relleno"
+-- 7) RETURN para devolver la variable
+-- 8) END (sin rellenar nada)
+-- 9) Ejecutamos el CREATE FUNCTION (se nos guarda en routines)
+-- 10) Llamamos al procedimiento con SELECT
+
+USE jardineria;
+DELIMITER $$
+DROP FUNCTION IF EXISTS devuelve_cuatro;
+CREATE FUNCTION devuelve_cuatro() -- ya no ponemos IN ni OUT
+RETURNS INT UNSIGNED -- no damos nombre a la variable de salida, solo el tipo, como en java
+DETERMINISTIC
+    BEGIN
+    -- EN ALGÚN MOMENTO CREAMOS LA VARIABLE DE SALIDA, total
+    RETURN 4;
+end $$
+
+SELECT devuelve_cuatro();
+
+
