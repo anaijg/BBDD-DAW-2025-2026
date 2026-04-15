@@ -469,6 +469,33 @@ IF search_condition THEN statement_list
 END IF
 ```
 Puede encontrar más información en la documentación oficial de MySQL.
+*Ejemplo1:*
+Escribe un procedimiento que reciba la edad de una persona y devuelva:
+- "MENOR" si tiene menos de 18 años
+- "MAYOR", en caso contrario
+```sql
+```
+*Ejemplo2:*
+Escribe una función que reciba una hora (0–23) y devuelva:
+"MADRUGADA" si está entre 0 y 5
+"MAÑANA" si está entre 6 y 11
+"TARDE" si está entre 12 y 19
+"NOCHE" si está entre 20 y 23
+```sql
+DELIMITER //
+DROP FUNCTION IF EXISTS ejemplo2_IF;
+CREATE FUNCTION ejemplo2_IF(hora INT UNSIGNED)
+    RETURNS VARCHAR(9)
+    NO SQL
+BEGIN
+    IF hora >= 0 AND hora <= 5 THEN RETURN 'MADRUGADA';
+    ELSEIF hora >= 6 AND hora <= 11 THEN RETURN 'MAÑANA';
+    ELSEIF hora >= 12 AND hora <= 19 THEN RETURN 'TARDE';
+    ELSE RETURN 'NOCHE';
+    END IF;
+end //
+SELECT ejemplo2_IF(18);
+```
 #### 1.3.1.2 CASE
 Existen dos formas de utilizar `CASE`:
 ```sql
@@ -487,16 +514,67 @@ CASE
 END CASE
 ```
 Puede encontrar más información en la documentación oficial de MySQL.
+*Ejemplo1:*
+Escribe un procedimiento que reciba la edad de una persona y devuelva:
+- "MENOR" si tiene menos de 18 años
+- "MAYOR", en caso contrario
+```SQL
+CREATE PROCEDURE ejemplo1_CASE(IN edad INT UNSIGNED, OUT respuesta VARCHAR(5))
+BEGIN
+    CASE
+        WHEN edad <= 18 THEN SET respuesta = 'MENOR';
+        ELSE SET respuesta = 'MAYOR';
+    END CASE ;
+END;
+CALL ejemplo1_CASE(15, @respuesta);
+SELECT @respuesta;
+```
+*Ejemplo2:*
+Escribe una función que reciba una hora (0–23) y devuelva:
+"MADRUGADA" si está entre 0 y 5
+"MAÑANA" si está entre 6 y 11
+"TARDE" si está entre 12 y 19
+"NOCHE" si está entre 20 y 23
+```sql
+DELIMITER //
+CREATE FUNCTION ejemplo2_CASE(hora INT UNSIGNED)
+RETURNS VARCHAR(9)
+NO SQL
+BEGIN
+    CASE
+        WHEN hora >= 0 AND hora <= 5 THEN RETURN 'MADRUGADA';
+        WHEN hora >= 6 AND hora <= 11 THEN RETURN 'MAÑANA';
+        WHEN hora >= 12 AND hora <= 19 THEN RETURN 'TARDE';
+        ELSE RETURN 'NOCHE';
+        END CASE ;
+end //
+SELECT ejemplo2_CASE(20);
+```
 
 ### 1.3.2 Instrucciones repetitivas o bucles
 #### 1.3.2.1 LOOP
+La estructura LOOP permite crear bucles en MySQL, es decir, repetir un bloque de instrucciones varias veces.
+
+👉 A diferencia de otros lenguajes:
+
+`LOOP` no tiene condición de salida automática. Debes controlar la salida manualmente con:
+- `LEAVE` → salir del bucle (equivale a `break` en otros lenguajs; si no usas `LEAVE`, el bucle será infinito)
+- `ITERATE` → saltar a la siguiente iteración (equivale a `continue`)
+
+*SINTAXIS:*
 ```sql
 [begin_label:] LOOP
     statement_list
 END LOOP [end_label]
 ```
+🔸 Elementos clave
+- *etiqueta (label)*: nombre opcional del bucle (muy recomendable)
+- `LOOP`: inicio del bucle
+- `END LOOP`: fin del bucle
 
-*Ejemplo*:
+
+
+*Ejemplo1*:
 ```sql
 CREATE PROCEDURE doiterate(p1 INT)
 BEGIN
@@ -511,7 +589,7 @@ BEGIN
 END;
 ```
 
-*Ejemplo:*
+*Ejemplo2:*
 ```sql
 DELIMITER $$
 DROP PROCEDURE IF EXISTS ejemplo_bucle_loop$$
