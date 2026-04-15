@@ -96,17 +96,20 @@ DELIMITER $$
 DROP PROCEDURE IF EXISTS calcular_max_min_media;
 CREATE PROCEDURE calcular_max_min_media(
     IN gama VARCHAR(50),
-    OUT precio_maximo DECIMAL(15,2),
-    OUT precio_minimo DECIMAL(15,2),
+    OUT precio_maximo DECIMAL(15, 2),
+    OUT precio_minimo DECIMAL(15, 2),
     OUT precio_medio DECIMAL(15, 2)
 )
 BEGIN
     SET precio_maximo = (SELECT MAX(precio_venta)
-        FROM producto p WHERE p.gama = gama);
+                         FROM producto p
+                         WHERE p.gama = gama);
     SET precio_minimo = (SELECT MIN(precio_venta)
-        FROM producto p WHERE p.gama = gama);
+                         FROM producto p
+                         WHERE p.gama = gama);
     SET precio_medio = (SELECT AVG(precio_venta)
-        FROM producto p WHERE p.gama = gama);
+                        FROM producto p
+                        WHERE p.gama = gama);
 end $$
 
 CALL calcular_max_min_media('Herramientas', @precio_maximo, @precio_minimo, @precio_medio);
@@ -134,13 +137,89 @@ USE jardineria;
 DELIMITER $$
 DROP FUNCTION IF EXISTS devuelve_cuatro;
 CREATE FUNCTION devuelve_cuatro() -- ya no ponemos IN ni OUT
-RETURNS INT UNSIGNED -- no damos nombre a la variable de salida, solo el tipo, como en java
-DETERMINISTIC
-    BEGIN
+    RETURNS INT UNSIGNED -- no damos nombre a la variable de salida, solo el tipo, como en java
+    DETERMINISTIC
+BEGIN
     -- EN ALGÚN MOMENTO CREAMOS LA VARIABLE DE SALIDA, total
     RETURN 4;
 end $$
 
 SELECT devuelve_cuatro();
 
+###############################################################
+# EJEMPLOS IF-ELSEIF-ELSE-ENDIF ###############################
+###############################################################
+# Ejemplo1: Escribe un procedimiento que reciba la edad de una persona y devuelva:
+# "MENOR" si tiene menos de 18 años
+# "MAYOR", en caso contrario
+USE test;
+DELIMITER $$
+DROP PROCEDURE IF EXISTS es_mayor_o_menor;
+CREATE PROCEDURE es_mayor_o_menor(IN edad INT UNSIGNED, OUT cadena VARCHAR(5))
+BEGIN
+    IF edad < 18 THEN
+        SET cadena = 'MENOR';
+    ELSE
+        SET cadena = 'MAYOR';
+    END IF;
+end $$
+
+CALL es_mayor_o_menor(15, @cadena);
+SELECT @cadena;
+
+# Ejemplo2: Escribe una función que reciba una hora (0–23) y devuelva: "MADRUGADA" si está entre 0 y 5 "MAÑANA" si está entre 6 y 11 "TARDE" si está entre 12 y 19 "NOCHE" si está entre 20 y 23
+DELIMITER //
+DROP FUNCTION IF EXISTS calcular_tramo_dia;
+CREATE FUNCTION calcular_tramo_dia(hora INT UNSIGNED)
+    RETURNS VARCHAR(9)
+    NO SQL
+BEGIN
+    IF hora >= 0 AND hora <= 5 THEN
+        RETURN 'MADRUGADA';
+    ELSEIF hora >= 6 AND hora <= 11 THEN
+        RETURN 'MAÑANA';
+    ELSEIF hora >= 12 AND hora <= 19 THEN
+        RETURN 'TARDE';
+    ELSE
+        RETURN 'NOCHE';
+    END IF;
+end //
+
+SELECT calcular_tramo_dia(20);
+
+###############################################################
+# EJEMPLOS CASE                 ###############################
+###############################################################
+# Ejemplo1: Escribe un procedimiento que reciba la edad de una persona y devuelva:
+# "MENOR" si tiene menos de 18 años
+# "MAYOR", en caso contrario
+DELIMITER //
+DROP PROCEDURE IF EXISTS ejemplo1_CASE;
+CREATE PROCEDURE ejemplo1_CASE(IN edad INT UNSIGNED, OUT cadena VARCHAR(5))
+BEGIN
+    CASE
+        WHEN edad < 18 THEN SET cadena = 'MENOR';
+        ELSE SET cadena = 'MAYOR';
+        END CASE;
+end //
+
+CALL ejemplo1_CASE(18, @cadena);
+SELECT @cadena;
+
+# Ejemplo2: Escribe una función que reciba una hora (0–23) y devuelva: "MADRUGADA" si está entre 0 y 5 "MAÑANA" si está entre 6 y 11 "TARDE" si está entre 12 y 19 "NOCHE" si está entre 20 y 23
+DELIMITER //
+DROP FUNCTION IF EXISTS calcular_tramo_dia;
+CREATE FUNCTION calcular_tramo_dia(hora INT UNSIGNED)
+    RETURNS VARCHAR(9)
+    NO SQL
+BEGIN
+    CASE
+        WHEN hora BETWEEN 0 AND 5 THEN RETURN 'MADRUGADA';
+        WHEN hora BETWEEN 6 AND 11 THEN RETURN 'MAÑANA';
+        WHEN hora BETWEEN 12 AND 19 THEN RETURN 'TARDE';
+        WHEN hora BETWEEN 20 AND 23 THEN RETURN 'NOCHE';
+    END CASE ;
+end //
+
+SELECT calcular_tramo_dia(20);
 
