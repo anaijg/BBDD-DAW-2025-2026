@@ -218,7 +218,7 @@ BEGIN
         WHEN hora BETWEEN 6 AND 11 THEN RETURN 'MAÑANA';
         WHEN hora BETWEEN 12 AND 19 THEN RETURN 'TARDE';
         WHEN hora BETWEEN 20 AND 23 THEN RETURN 'NOCHE';
-    END CASE ;
+        END CASE;
 end //
 
 SELECT calcular_tramo_dia(20);
@@ -226,3 +226,86 @@ SELECT calcular_tramo_dia(20);
 ###############################################################
 # EJEMPLOS LOOP                 ###############################
 ###############################################################
+# Ejemplo 1: escribe un procedimiento que utilice un bucle para imprimir todos los números impares del 1 al 30
+USE procedimientos;
+CREATE TABLE ejemplo1_LOOP
+(
+    numero_impar INT UNSIGNED
+);
+DELIMITER //
+DROP PROCEDURE IF EXISTS ejemplo1_LOOP;
+CREATE PROCEDURE ejemplo1_LOOP()
+BEGIN
+    DECLARE contador INT UNSIGNED DEFAULT 1;
+    -- borramos el contenido de la tabla
+    DELETE FROM ejemplo1_LOOP;
+    -- ahora la rellenamos con el bucle
+    buclecito:
+    LOOP
+        IF contador % 2 != 0 THEN
+            INSERT INTO ejemplo1_LOOP VALUE (contador);
+        END IF;
+        SET contador = contador + 1;
+        IF contador = 30 THEN
+            LEAVE buclecito;
+        end if;
+    end loop;
+end //
+CALL ejemplo1_LOOP();
+
+###############################################################
+# EJEMPLOS WHILE                 ##############################
+###############################################################
+# Ejemplo 1: escribe un procedimiento que utilice un bucle para imprimir todos los números impares del 1 al 30
+USE procedimientos;
+CREATE TABLE ejemplo1_WHILE
+(
+    numero_impar INT UNSIGNED
+);
+DELIMITER //
+DROP PROCEDURE IF EXISTS ejemplo1_WHILE;
+CREATE PROCEDURE ejemplo1_WHILE()
+BEGIN
+    DECLARE contador INT UNSIGNED DEFAULT 1;
+    -- borramos el contenido de la tabla
+    DELETE FROM ejemplo1_LOOP;
+    -- ahora la rellenamos con el bucle
+    WHILE contador <= 30
+        DO
+            IF contador % 2 != 0 THEN
+                INSERT INTO ejemplo1_LOOP VALUE (contador);
+            END IF;
+            SET contador = contador + 1;
+
+        end WHILE;
+end //
+CALL ejemplo1_WHILE();
+
+###############################################################
+# EJEMPLOS REPEAT                 #############################
+###############################################################
+# Ejemplo 1: escribe un procedimiento que utilice un bucle para imprimir todos los números impares del 1 al 30
+USE procedimientos;
+CREATE TABLE ejemplo1_REPEAT
+(
+    numero_impar INT UNSIGNED
+);
+DELIMITER //
+DROP PROCEDURE IF EXISTS ejemplo1_REPEAT;
+CREATE PROCEDURE ejemplo1_REPEAT()
+BEGIN
+    DECLARE contador INT UNSIGNED DEFAULT 1;
+    -- borramos el contenido de la tabla
+    DELETE FROM ejemplo1_REPEAT;
+    -- ahora la rellenamos con el bucle
+    REPEAT
+            IF contador % 2 != 0 THEN
+                INSERT INTO ejemplo1_REPEAT VALUE (contador);
+            END IF;
+            SET contador = contador + 1;
+    UNTIL contador > 30
+        end REPEAT;
+end //
+CALL ejemplo1_REPEAT();
+
+

@@ -112,15 +112,67 @@ SELECT @mensaje;
 # 7. Resuelva el procedimiento diseñado en el ejercicio anterior haciendo uso de la estructura de control CASE.
 #
 # 8. Crea una base de datos llamada procedimientos que contenga una tabla llamada cuadrados. La tabla cuadrados debe tener dos columnas de tipo INT UNSIGNED, una columna llamada número y otra columna llamada cuadrado. Una vez creada la base de datos y la tabla deberá crear un procedimiento llamado calcular_cuadrados con las siguientes características: el procedimiento recibe un parámetro de entrada llamado tope de tipo INT UNSIGNED y calculará el valor de los cuadrados de los primeros números naturales hasta el valor introducido como parámetro. El valor del número y de sus cuadrados deberán ser almacenados en la tabla cuadrados que hemos creado previamente.
-#
+
 # Tenga en cuenta que el procedimiento deberá eliminar el contenido actual de la tabla antes de insertar los nuevos valores de los cuadrados que va a calcular.
-#
+# CON LOOP
+USE procedimientos;
+CREATE TABLE cuadrados
+(
+    numero   INT UNSIGNED,
+    cuadrado INT UNSIGNED
+);
+DELIMITER //
+DROP PROCEDURE IF EXISTS calcular_cuadrados;
+CREATE PROCEDURE calcular_cuadrados(IN tope INT UNSIGNED)
+BEGIN
+    DECLARE contador INT UNSIGNED DEFAULT 1;
+    DELETE FROM cuadrados;
+    bucle_cuadrado:
+    LOOP
+        INSERT INTO cuadrados VALUES (contador, POW(contador, 2));
+        SET contador = contador + 1;
+        IF contador > tope THEN
+            LEAVE bucle_cuadrado;
+        END IF;
+    end loop;
+end //
+
+CALL calcular_cuadrados(12);
+
 # 9. Utilice un bucle WHILE para resolver el procedimiento.
-#
+USE procedimientos;
+DELIMITER //
+DROP PROCEDURE IF EXISTS calcular_cuadrados;
+CREATE PROCEDURE calcular_cuadrados(IN tope INT UNSIGNED)
+BEGIN
+    DECLARE contador INT UNSIGNED DEFAULT 1;
+    DELETE FROM cuadrados;
+    WHILE contador <= tope DO -- mientras contador sea menor o igual que tope, sigo con la siguiente iteración cada vez
+        INSERT INTO cuadrados VALUES (contador, POW(contador, 2));
+        SET contador = contador + 1;
+    end WHILE ;
+end //
+
+CALL calcular_cuadrados(12);
+
 # 10. Utilice un bucle REPEAT para resolver el procedimiento del ejercicio anterior.
-#
+USE procedimientos;
+DELIMITER //
+DROP PROCEDURE IF EXISTS calcular_cuadrados;
+CREATE PROCEDURE calcular_cuadrados(IN tope INT UNSIGNED)
+BEGIN
+    DECLARE contador INT UNSIGNED DEFAULT 1;
+    DELETE FROM cuadrados;
+    REPEAT
+        INSERT INTO cuadrados VALUES (contador, POW(contador, 2));
+        SET contador = contador + 1;
+        UNTIL contador > tope -- mientras contador sea menor o igual que tope, sigo con la siguiente iteración cada vez
+    end REPEAT ;
+end //
+
+CALL calcular_cuadrados(9);
 # 11. Utilice un bucle LOOP para resolver el procedimiento del ejercicio anterior.
-#
+
 # 12. Crea una base de datos llamada procedimientos que contenga una tabla llamada ejercicio. La tabla debe tener una única columna llamada número y el tipo de dato de esta columna debe ser INT UNSIGNED.
 #
 # 13. Una vez creada la base de datos y la tabla deberá crear un procedimiento llamado calcular_números con las siguientes características: El procedimiento recibe un parámetro de entrada llamado valor_inicial de tipo INT UNSIGNED y deberá almacenar en la tabla ejercicio toda la secuencia de números desde el valor inicial pasado como entrada hasta el 1.
