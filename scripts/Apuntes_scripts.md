@@ -624,6 +624,14 @@ Puede encontrar más información en la documentación oficial de MySQL.
 UNTIL search_condition
 END REPEAT [end_label]
 ```
+🧠 Cómo funciona
+
+👉 Ejecuta al menos una vez
+👉 Después evalúa la condición
+
+Si es verdadera → termina
+Si es falsa → repite
+
 *Ejemplo*:
 ```sql
 DELIMITER $$
@@ -655,6 +663,11 @@ Puede encontrar más información en la documentación oficial de MySQL.
     statement_list
 END WHILE [end_label]
 ```
+🧠 Cómo funciona
+
+👉 Primero comprueba la condición
+👉 Si es verdadera → ejecuta el bloque
+👉 Si es falsa → no entra nunca
 
 *Ejemplo*:
 ```sql

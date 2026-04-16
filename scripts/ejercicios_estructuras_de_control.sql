@@ -1,8 +1,41 @@
 # Procedimientos
 # 1. Escribe un procedimiento que reciba un número real de entrada y muestre un mensaje indicando si el número es positivo, negativo o cero.
+DROP DATABASE IF EXISTS procedimientos;
+CREATE DATABASE procedimientos;
+USE procedimientos;
+
+DELIMITER //
+DROP PROCEDURE IF EXISTS signo_numero;
+CREATE PROCEDURE signo_numero(IN numero INTEGER)
+BEGIN
+    IF numero > 0 THEN
+        SELECT 'Positivo';
+    ELSEIF numero = 0 THEN
+        SELECT 'Cero';
+    ELSE
+        SELECT 'Negativo';
+    end if;
+END //
+
+CALL signo_numero(0);
 
 # 2. Modifique el procedimiento diseñado en el ejercicio anterior para que tenga un parámetro de entrada, con el valor un número real, y un parámetro de salida, con una cadena de caracteres indicando si el número es positivo, negativo o cero.
-#
+DELIMITER //
+DROP PROCEDURE IF EXISTS signo_numero;
+CREATE PROCEDURE signo_numero(IN numero INTEGER, OUT mensaje VARCHAR(8))
+BEGIN
+    IF numero > 0 THEN
+        SET mensaje = 'Positivo';
+    ELSEIF numero = 0 THEN
+        SET mensaje = 'Cero';
+    ELSE
+        SET mensaje = 'Negativo';
+    end if;
+END //
+
+CALL signo_numero(0, @mensaje);
+SELECT @mensaje;
+
 # 3. Escribe un procedimiento que reciba un número real de entrada, que representa el valor de la nota de un alumno, y muestre un mensaje indicando qué nota ha obtenido teniendo en cuenta las siguientes condiciones:
 #
 # [0,5) = Insuficiente
@@ -10,12 +43,69 @@
 # [6, 7) = Bien
 # [7, 9) = Notable
 # [9, 10] = Sobresaliente En cualquier otro caso la nota no será válida.
+DELIMITER //
+DROP PROCEDURE IF EXISTS convertir_nota;
+CREATE PROCEDURE convertir_nota(IN nota DOUBLE)
+BEGIN
+    IF nota >= 0 AND nota < 5 THEN
+        SELECT 'Insuficiente';
+    ELSEIF nota >= 5 AND nota < 6 THEN
+        SELECT 'Aprobado';
+    ELSEIF nota >= 6 AND nota < 7 THEN
+        SELECT 'Bien';
+    ELSEIF nota >= 7 AND nota < 9 THEN
+        SELECT 'Notable';
+    ELSEIF nota >= 9 AND nota <= 10 THEN
+        SELECT 'Sobresaliente';
+    ELSE
+        SELECT 'Nota no válida';
+    END IF;
+end //
+
+CALL convertir_nota(6.9999);
 
 # 4. Modifique el procedimiento diseñado en el ejercicio anterior para que tenga un parámetro de entrada, con el valor de la nota en formato numérico y un parámetro de salida, con una cadena de texto indicando la nota correspondiente.
-#
+DELIMITER //
+DROP PROCEDURE IF EXISTS convertir_nota;
+CREATE PROCEDURE convertir_nota(IN nota DOUBLE, OUT mensaje VARCHAR(20))
+BEGIN
+    IF nota >= 0 AND nota < 5 THEN
+        SET mensaje = 'Insuficiente';
+    ELSEIF nota >= 5 AND nota < 6 THEN
+        SET mensaje = 'Aprobado';
+    ELSEIF nota >= 6 AND nota < 7 THEN
+        SET mensaje = 'Bien';
+    ELSEIF nota >= 7 AND nota < 9 THEN
+        SET mensaje = 'Notable';
+    ELSEIF nota >= 9 AND nota <= 10 THEN
+        SET mensaje = 'Sobresaliente';
+    ELSE
+        SET mensaje = 'Nota no válida';
+    END IF;
+end //
+
+CALL convertir_nota(6.9999, @mensaje);
+SELECT @mensaje;
+
 
 # 5. Resuelva el procedimiento diseñado en el ejercicio anterior haciendo uso de la estructura de control CASE.
-#
+DELIMITER //
+DROP PROCEDURE IF EXISTS convertir_nota;
+CREATE PROCEDURE convertir_nota(IN nota DOUBLE, OUT mensaje VARCHAR(20))
+BEGIN
+    CASE
+        WHEN nota >= 0 AND nota < 5 THEN SET mensaje = 'Insuficiente';
+        WHEN nota >= 5 AND nota < 6 THEN SET mensaje = 'Aprobado';
+        WHEN nota >= 6 AND nota < 7 THEN SET mensaje = 'Bien';
+        WHEN nota >= 7 AND nota < 9 THEN SET mensaje = 'Notable';
+        WHEN nota >= 9 AND nota <= 10 THEN SET mensaje = 'Sobresaliente';
+        ELSE SET mensaje = 'Nota no válida';
+        END CASE;
+end //
+
+CALL convertir_nota(4.9999, @mensaje);
+SELECT @mensaje;
+
 
 # 6. Escribe un procedimiento que reciba como parámetro de entrada un valor numérico que represente un día de la semana y que devuelva una cadena de caracteres con el nombre del día de la semana correspondiente. Por ejemplo, para el valor de entrada 1 debería devolver la cadena lunes. Resuelva el procedimiento haciendo uso de la estructura de control IF.
 #
