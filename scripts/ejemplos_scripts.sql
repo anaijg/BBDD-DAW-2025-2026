@@ -308,4 +308,99 @@ BEGIN
 end //
 CALL ejemplo1_REPEAT();
 
+###############################################################
+# EJEMPLOS HANDLER                 #############################
+###############################################################
+# Ejemplo 1 - Error de clave duplicada - 23000
+-- Paso 1
+DROP DATABASE IF EXISTS test;
+CREATE DATABASE test;
+USE test;
 
+-- Paso 2
+CREATE TABLE test.t (s1 INT, PRIMARY KEY (s1));
+
+-- Paso 3
+DELIMITER $$
+DROP PROCEDURE IF EXISTS handlerdemo;
+CREATE PROCEDURE handlerdemo ()
+BEGIN
+  DECLARE CONTINUE HANDLER FOR SQLSTATE '23000' SET @x = 100;
+  SET @x = 1;
+  INSERT INTO test.t VALUES (2);
+  SET @x = 2;
+  INSERT INTO test.t VALUES (2);
+  SET @x = 3;
+END
+$$
+
+DELIMITER ;
+CALL handlerdemo();
+SELECT @x;
+
+###############################################################
+# EJEMPLOS TRANSACCIONES          #############################
+###############################################################
+# ## 🎯 Ejemplo práctico de transacciones en MySQL
+#
+# ### 🧩 Escenario
+#
+# Vamos a simular una **transferencia de dinero entre cuentas bancarias**:
+#
+# - Cuenta A → tiene dinero
+# - Cuenta B → recibe dinero
+#
+# 👉 Queremos que:
+# - Si todo va bien → se guarde (COMMIT)
+# - Si algo falla → no se haga nada (ROLLBACK)
+#
+# ---
+#
+# ## 🔹 1. Crear la tabla
+USE test;
+
+DROP TABLE IF EXISTS cuentas;
+
+CREATE TABLE cuentas (
+    id INT PRIMARY KEY,
+    titular VARCHAR(50),
+    saldo DECIMAL(10,2)
+);
+
+INSERT INTO cuentas VALUES (1, 'Ana', 1000);
+INSERT INTO cuentas VALUES (2, 'Luis', 500);
+
+# Creamos el procedimiento con la transacción:
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS transferencia;
+
+CREATE PROCEDURE transferencia(
+    IN origen INT,
+    IN destino INT,
+    IN cantidad DECIMAL(10,2)
+)
+BEGIN
+  -- Handler para errores y warnings
+  DECLARE EXIT HANDLER FOR SQLEXCEPTION, SQLWARNING
+  BEGIN
+    ROLLBACK;
+  END;
+
+  START TRANSACTION;
+
+    -- Restar dinero de la cuenta origen
+    UPDATE cuentas
+    SET saldo = saldo - cantidad
+    WHERE id = origen;
+
+    -- 🔴 Provocamos un error (por ejemplo, cuenta destino inexistente)
+    UPDATE cuentas
+    SET saldo = saldo + cantidad
+    WHERE id = destino;
+
+  COMMIT;
+
+END$$
+
+DELIMITER ;
