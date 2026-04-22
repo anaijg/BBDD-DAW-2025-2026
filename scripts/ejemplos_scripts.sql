@@ -381,7 +381,7 @@ CREATE PROCEDURE transferencia(
     IN cantidad DECIMAL(10,2)
 )
 BEGIN
-  -- Handler para errores y warnings
+  -- Handler para errores y warnings (si salta cualquier error o warning durante la transacción, hace ROLLBACK
   DECLARE EXIT HANDLER FOR SQLEXCEPTION, SQLWARNING
   BEGIN
     ROLLBACK;
@@ -394,7 +394,7 @@ BEGIN
     SET saldo = saldo - cantidad
     WHERE id = origen;
 
-    -- 🔴 Provocamos un error (por ejemplo, cuenta destino inexistente)
+    -- Añade la cantidad a la cuenta destino
     UPDATE cuentas
     SET saldo = saldo + cantidad
     WHERE id = destino;
@@ -403,4 +403,15 @@ BEGIN
 
 END$$
 
-DELIMITER ;
+-- Hacemos una llamada en que to-do va bien:
+SELECT * FROM cuentas;
+
+CALL transferencia(1, 2, 100);
+
+SELECT * FROM cuentas;
+
+-- Hacemos una llamada en que falla algo: ejemplo: cuenta que no existe
+CALL transferencia(5, 2, 1000);
+
+CALL transferencia(1, 999, 100);
+SELECT * FROM cuentas;
