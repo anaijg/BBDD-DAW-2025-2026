@@ -172,34 +172,96 @@ end //
 
 CALL calcular_cuadrados(9);
 # 11. Utilice un bucle LOOP para resolver el procedimiento del ejercicio anterior.
-
+-- es el ejercicio 8
 # 12. Crea una base de datos llamada procedimientos que contenga una tabla llamada ejercicio. La tabla debe tener una única columna llamada número y el tipo de dato de esta columna debe ser INT UNSIGNED.
+USE procedimientos;
+CREATE TABLE ejercicio(
+    numero INT UNSIGNED
+)
+# 13. Una vez creada la base de datos y la tabla deberá
+# crear un procedimiento llamado calcular_números con las siguientes características: El procedimiento
+# recibe un parámetro de entrada llamado valor_inicial de tipo INT UNSIGNED
+# y deberá almacenar en la tabla ejercicio toda la secuencia de números desde el valor inicial pasado como entrada hasta el 1.
+
+# Tenga en cuenta que el procedimiento deberá eliminar el contenido actual de las tablas antes de insertar los nuevos valores.
+
+#Utilice un bucle WHILE para resolver el procedimiento.
+DELIMITER //
+DROP PROCEDURE IF EXISTS calcular_numeros;
+CREATE PROCEDURE calcular_numeros(IN valor_inicial INT UNSIGNED)
+BEGIN
+    DECLARE contador INT UNSIGNED DEFAULT valor_inicial;
+    DELETE FROM ejercicio;
+    WHILE contador >= 1 DO
+        INSERT INTO ejercicio VALUES (contador);
+        SET contador = contador - 1;
+        end while;
+end //
+CALL calcular_numeros(15);
+SELECT * FROM ejercicio;
+# 14. Utilice un bucle REPEAT para resolver el procedimiento del ejercicio anterior.
+DELIMITER //
+DROP PROCEDURE IF EXISTS calcular_numeros;
+CREATE PROCEDURE calcular_numeros(IN valor_inicial INT UNSIGNED)
+BEGIN
+    DECLARE contador INT UNSIGNED DEFAULT valor_inicial;
+    DELETE FROM ejercicio;
+    REPEAT
+        INSERT INTO ejercicio VALUES (contador);
+        SET contador = contador - 1;
+    until contador = 0 end repeat;
+end //
+CALL calcular_numeros(20);
+SELECT * FROM ejercicio;
+# 15. Utilice un bucle LOOP para resolver el procedimiento del ejercicio anterior.
+DELIMITER //
+DROP PROCEDURE IF EXISTS calcular_numeros;
+CREATE PROCEDURE calcular_numeros(IN valor_inicial INT UNSIGNED)
+BEGIN
+    DECLARE contador INT UNSIGNED DEFAULT valor_inicial;
+    DELETE FROM ejercicio;
+    bucle: LOOP
+        INSERT INTO ejercicio VALUES (contador);
+        SET contador = contador - 1;
+        IF contador = 0 THEN
+            LEAVE bucle;
+        end if;
+    END LOOP ;
+end //
+CALL calcular_numeros(30);
+SELECT * FROM ejercicio;
+
+# 16. Crea una base de datos llamada procedimientos que contenga una tabla llamada pares y otra tabla llamada impares. Las dos tablas deben tener única columna llamada número y el tipo de dato de esta columna debe ser INT UNSIGNED.
 #
-# 13. Una vez creada la base de datos y la tabla deberá crear un procedimiento llamado calcular_números con las siguientes características: El procedimiento recibe un parámetro de entrada llamado valor_inicial de tipo INT UNSIGNED y deberá almacenar en la tabla ejercicio toda la secuencia de números desde el valor inicial pasado como entrada hasta el 1.
+# 17. Una vez creada la base de datos y las tablas deberá crear un procedimiento llamado calcular_pares_impares con las siguientes características: el procedimiento recibe un parámetro de entrada llamado tope de tipo INT UNSIGNED y deberá almacenar en la tabla pares aquellos números pares que existan entre el número 1 el valor introducido como parámetro. Habrá que realizar la misma operación para almacenar los números impares en la tabla impares.
 #
 # Tenga en cuenta que el procedimiento deberá eliminar el contenido actual de las tablas antes de insertar los nuevos valores.
 #
-# 14. Utilice un bucle WHILE para resolver el procedimiento.
+# 18. Utilice un bucle WHILE para resolver el procedimiento.
 #
-# 15. Utilice un bucle REPEAT para resolver el procedimiento del ejercicio anterior.
+# 19. Utilice un bucle REPEAT para resolver el procedimiento del ejercicio anterior.
 #
-# 16. Utilice un bucle LOOP para resolver el procedimiento del ejercicio anterior.
-#
-# 17. Crea una base de datos llamada procedimientos que contenga una tabla llamada pares y otra tabla llamada impares. Las dos tablas deben tener única columna llamada número y el tipo de dato de esta columna debe ser INT UNSIGNED.
-#
-# 18. Una vez creada la base de datos y las tablas deberá crear un procedimiento llamado calcular_pares_impares con las siguientes características: el procedimiento recibe un parámetro de entrada llamado tope de tipo INT UNSIGNED y deberá almacenar en la tabla pares aquellos números pares que existan entre el número 1 el valor introducido como parámetro. Habrá que realizar la misma operación para almacenar los números impares en la tabla impares.
-#
-# Tenga en cuenta que el procedimiento deberá eliminar el contenido actual de las tablas antes de insertar los nuevos valores.
-#
-# 19. Utilice un bucle WHILE para resolver el procedimiento.
-#
-# 20. Utilice un bucle REPEAT para resolver el procedimiento del ejercicio anterior.
-#
-# 21. Utilice un bucle LOOP para resolver el procedimiento del ejercicio anterior.
+# 20. Utilice un bucle LOOP para resolver el procedimiento del ejercicio anterior.
 #
 # Funciones
-# 22. Escribe una función que reciba un número entero de entrada y devuelva TRUE si el número es par o FALSE en caso contrario.
+# 21. Escribe una función que reciba un número entero de entrada y devuelva TRUE si el número es par o FALSE en caso contrario.
+CREATE DATABASE funciones;
+USE funciones;
 
-# 23. Escribe una función que reciba como parámetro de entrada un valor numérico que represente un día de la semana y que devuelva una cadena de caracteres con el nombre del día de la semana correspondiente. Por ejemplo, para el valor de entrada 1 debería devolver la cadena lunes.
-#
-# 24. Escribe una función que reciba tres números reales como parámetros de entrada y devuelva el mayor de los tres.
+DELIMITER //;
+DROP FUNCTION IF EXISTS devuelve_par_impar;
+CREATE FUNCTION devuelve_par_impar(numero INTEGER)
+RETURNS VARCHAR(5)
+NO SQL
+BEGIN
+    IF numero % 2 = 0 THEN
+        RETURN 'TRUE';
+    ELSE
+        RETURN 'FALSE';
+    end if;
+end //;
+
+SELECT devuelve_par_impar(25);
+# 22. Escribe una función que reciba como parámetro de entrada un valor numérico que represente un día de la semana y que devuelva una cadena de caracteres con el nombre del día de la semana correspondiente. Por ejemplo, para el valor de entrada 1 debería devolver la cadena lunes.
+
+# 23. Escribe una función que reciba tres números reales como parámetros de entrada y devuelva el mayor de los tres.

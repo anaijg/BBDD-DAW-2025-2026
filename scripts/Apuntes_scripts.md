@@ -759,7 +759,13 @@ Utilice un bucle `WHILE` para resolver el procedimiento.
 
 
 ## 1.4 Manejo de errores
+Cuando trabajamos con procedimientos almacenados, pueden producirse errores (por ejemplo, insertar valores duplicados o acceder a tablas que no existen).
+
+Para **controlar estos errores y evitar que el programa falle**, usamos los **handlers**.
 #### 1.4.1 DECLARE ... HANDLER
+Un *handler* es un bloque de código que se ejecuta automáticamente cuando ocurre un error o una condición concreta.
+
+**Sintaxis general**: 
 ```sql
 DECLARE handler_action HANDLER
     FOR condition_value [, condition_value] ...
@@ -778,32 +784,44 @@ condition_value:
   | NOT FOUND
   | SQLEXCEPTION
 ````
+🔹 Tipos de acciones (handler_action)
 Las acciones posibles que podemos seleccionar como handler_action son:
 
 - `CONTINUE`: La ejecución del programa continúa.
 - `EXIT`: Termina la ejecución del programa.
 - `UNDO`: No está soportado en MySQL.
+
+🔹 Tipos de condiciones (condition_value)
+Puedes definir cuándo se activa el handler:
+
+- Código de error MySQL
+- SQLSTATE
+- Nombre de condición
+- SQLWARNING → advertencias
+- NOT FOUND → no hay más datos (muy usado con cursores)
+- SQLEXCEPTION → cualquier error
 Puede encontrar más información en la documentación oficial de MySQL.
-
-Ejemplo indicando el número de error de MySQL:
-
-En este ejemplo estamos declarando un handler que se ejecutará cuando se produzca el error 1051 de MySQL, que ocurre cuando se intenta acceder a una tabla que no existe en la base de datos. En este caso la acción del handler es CONTINUE lo que quiere decir que después de ejecutar las instrucciones especificadas en el cuerpo del handler el procedimiento almacenado continuará su ejecución.
+✔️ 1. Usando código de error MySQL
+- Error 1051 → tabla no existe
+En este ejemplo estamos declarando un handler que se ejecutará cuando se produzca el error 1051 de MySQL, que ocurre cuando se intenta acceder a una tabla que no existe en la base de datos. En este caso la acción del handler es `CONTINUE` lo que quiere decir que después de ejecutar las instrucciones especificadas en el cuerpo del handler el procedimiento almacenado continuará su ejecución.
 ```sql
 DECLARE CONTINUE HANDLER FOR 1051
 BEGIN
-  -- body of handler
+  -- código a ejecutar si ocurre el error
 END;
 ```
-
+✔️ 2. Usando SQLSTATE
+Error de tabla inexistente → '42S02'
 Ejemplo para `SQLSTATE`:
 
 También podemos indicar el valor de la variable `SQLSTATE`. Por ejemplo, cuando se intenta acceder a una tabla que no existe en la base de datos, el valor de la variable `SQLSTATE` es 42S02.
 ```sql
 DECLARE CONTINUE HANDLER FOR SQLSTATE '42S02'
 BEGIN
-  -- body of handler
+  -- código a ejecutar si ocurre el error
 END;
 ```
+✔️ 3. SQLWARNING
 
 Ejemplo para `SQLWARNING`:
 
@@ -814,7 +832,7 @@ BEGIN
   -- body of handler
 END;
 ```
-
+✔️ 4. NOT FOUND
 Ejemplo para `NOT FOUND`:
 
 Es equivalente a indicar todos los valores de `SQLSTATE` que empiezan con `02`. Lo usaremos cuando estemos trabajando con cursores para controlar qué ocurre cuando un cursor alcanza el final del data set. Si no hay más filas disponibles en el cursor, entonces ocurre una condición de `NO DATA` con un valor de `SQLSTATE` igual a `02000`. Para detectar esta condición podemos usar un handler para controlarlo.
@@ -825,6 +843,10 @@ BEGIN
   -- body of handler
 END;
 ````
+✔️ 5. SQLEXCEPTION
+
+Captura cualquier error
+
 Ejemplo para `SQLEXCEPTION`:
 
 Es equivalente a indicar todos los valores de `SQLSTATE` que empiezan por `00`, `01` y `02`.
@@ -861,7 +883,14 @@ DELIMITER ;
 CALL handlerdemo();
 SELECT @x;
 ``` 
-¿Qué valor devolvería la sentencia SELECT @x?
+🔍 ¿Qué ocurre aquí?
+- `23000` → error de clave duplicada
+- El segundo `INSERT` falla
+- Se activa el handler → SET @x = 1
+- Como es CONTINUE, el programa sigue ejecutándose
+✅ Resultado final: `@x = 3`
+
+👉 Porque después del error, el programa continúa y ejecuta `SET @x = 3`
 
 ### 1.4.3 Ejemplo 2 - `DECLARE EXIT HANDLER`
 ```sql
@@ -890,7 +919,14 @@ DELIMITER ;
 CALL handlerdemo();
 SELECT @x;
 ```` 
-¿Qué valor devolvería la sentencia SELECT @x?
+🔍 ¿Qué ocurre aquí?
+- Se produce el mismo error (clave duplicada)
+- Se ejecuta el handler → `SET @x = 1`
+- Como es `EXIT`, el procedimiento termina inmediatamente
+❌ Resultado final: `@x = 1`
+
+👉 Porque el programa no llega a ejecutar `SET @x = 3`
+
 
 ### 1.4.4 Ejercicios de manejo de errores en MySQL
 1. Crea una base de datos llamada `test` que contenga una tabla llamada `alumno`. La tabla debe tener cuatro columnas:
@@ -902,31 +938,79 @@ Una vez creada la base de datos y la tabla deberá crear un procedimiento llamad
 
 Deberá manejar los errores que puedan ocurrir cuando se intenta insertar una fila que contiene una clave primaria repetida.
 ## 1.5 Cómo realizar transacciones con procedimientos almacenados
-Podemos utilizar el manejo de errores para decidir si hacemos ROLLBACK de una transacción. En el siguiente ejemplo vamos a capturar los errores que se produzcan de tipo `SQLEXCEPTION` y `SQLWARNING`.
+Las **transacciones** permiten agrupar varias operaciones SQL para que se ejecuten como una única unidad.
 
-*Ejemplo*:
+👉 **Idea clave:**
+- ✅ Todo correcto → `COMMIT` (se guardan los cambios)
+- ❌ Hay error → `ROLLBACK` (se deshacen los cambios)
+
+---
+
+🔹 ¿Por qué usar handlers con transacciones?
+
+Cuando ocurre un error dentro de una transacción:
+
+- Sin control → la base de datos puede quedar en un estado inconsistente
+- Con **handlers** → podemos decidir qué hacer (por ejemplo, hacer `ROLLBACK`)
+
+---
+
+🔹 Estructura básica de una transacción
+
+```sql
+START TRANSACTION;
+
+-- operaciones SQL
+
+COMMIT;
+```
+⚠️ Problema
+
+👉 ¿Qué pasa si falla una de las operaciones?
+
+💥 Podríamos dejar la base de datos en un estado inconsistente.
+
+---
+
+✅ Solución: usar HANDLER + ROLLBACK
+
+🔸 **Ejemplo 1: handler para errores y warnings**
+
 ```sql
 DELIMITER $$
+
 CREATE PROCEDURE transaccion_en_mysql()
 BEGIN
+  -- Handler para errores
   DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-      -- ERROR
-      ROLLBACK;
+  BEGIN
+    ROLLBACK;
   END;
- 
+
+  -- Handler para advertencias
   DECLARE EXIT HANDLER FOR SQLWARNING
   BEGIN
-      -- WARNING
-  ROLLBACK;
+    ROLLBACK;
   END;
 
   START TRANSACTION;
+
     -- Sentencias SQL
+    -- Ejemplo:
+    -- INSERT ...
+    -- UPDATE ...
+
   COMMIT;
-END
-$$
-````
+
+END$$
+
+DELIMITER ;
+```
+🔍 ¿Cómo funciona?
+- Si ocurre un error (`SQLEXCEPTION`) → se ejecuta `ROLLBACK`
+- Si ocurre un warning (`SQLWARNING`) → también `ROLLBACK`
+- Como son `EXIT HANDLER` → el procedimiento termina inmediatamente
+
 En lugar de tener un manejador para cada tipo de error, podemos tener uno común para todos los casos.
 ```sql
 DELIMITER $$
@@ -944,7 +1028,12 @@ BEGIN
 END
 $$
 ```
-### Ejercicios de transacciones con procedimientos almacenados
+⚠️ Buenas prácticas
+✔️ Declarar siempre los `HANDLER` al principio del bloque
+✔️ Usar `EXIT` para abortar la transacción
+✔️ Incluir todas las operaciones dentro del `START TRANSACTION`
+✔️ No olvidar el `COMMIT`
+### 1.5.1. Ejercicios de transacciones con procedimientos almacenados
 1. Crea una base de datos llamada `cine` que contenga dos tablas con las siguientes columnas.
 - Tabla `cuentas`:
 
@@ -1112,8 +1201,48 @@ BEGIN
 END;
 ```
 
-## 1.7 Triggers
+### 1.6.2 Ejercicios con cursores
+1. Escribe las sentencias SQL necesarias para crear una base de datos llamada `test`, una tabla llamada `alumnos` y 4 sentencias de inserción para inicializar la tabla. La tabla alumnos está formada por las siguientes columnas:
+- `id` (entero sin signo y clave primaria)
+- `nombre` (cadena de caracteres)
+- `apellido1` (cadena de caracteres)
+- `apellido2` (cadena de caracteres
+- `fecha_nacimiento` (fecha)
 
+Una vez creada la tabla se decide añadir una nueva columna a la tabla llamada `edad`, que será un valor calculado a partir de la columna `fecha_nacimiento`. Escriba la sentencia SQL necesaria para modificar la tabla y añadir la nueva columna.
+
+Escriba una función llamada `calcular_edad` que reciba una fecha y devuelva el número de años que han pasado desde la fecha actual hasta la fecha pasada como parámetro:
+
+- Función: `calcular_edad`
+- Entrada: Fecha
+- Salida: Número de años (entero)
+
+- Ahora escriba un procedimiento que permita calcular la edad de todos los alumnos que ya existen en la tabla. Para esto será necesario crear un procedimiento llamado `actualizar_columna_edad` que calcule la edad de cada alumno y actualice la tabla. Este procedimiento hará uso de la función `calcular_edad` que hemos creado en el paso anterior.
+
+2. Modifica la tabla alumnos del ejercicio anterior para añadir una nueva columna `email`. Una vez que hemos modificado la tabla necesitamos asignarle una dirección de correo electrónico de forma automática.
+Escriba un procedimiento llamado `crear_email` que, dados los parámetros de entrada: `nombre`, `apellido1`, `apellido2` y `dominio`, cree una dirección de email y la devuelva como salida.
+
+- Procedimiento: `crear_email`
+- Entrada:
+  - `nombre` (cadena de caracteres)
+  - `apellido1` (cadena de caracteres)
+  - `apellido2` (cadena de caracteres)
+  - `dominio` (cadena de caracteres)
+Salida:
+  - `email` (cadena de caracteres)
+devuelva una dirección de correo electrónico con el siguiente formato:
+
+- El primer carácter del parámetro `nombre`.
+- Los tres primeros caracteres del parámetro `apellido1`.
+- Los tres primeros caracteres del parámetro `apellido2`.
+- El carácter `@`.
+- El dominio pasado como parámetro.
+Ahora escriba un procedimiento que permita crear un email para todos los alumnmos que ya existen en la tabla. Para esto será necesario crear un procedimiento llamado `actualizar_columna_email` que actualice la columna `email` de la tabla alumnos. Este procedimiento hará uso del procedimiento `crear_email` que hemos creado en el paso anterior.
+
+3. Escribe un procedimiento llamado `crear_lista_emails_alumnos` que devuelva la lista de emails de la tabla alumnos separados por un punto y coma. Ejemplo: `juan@iescelia.org;maria@iescelia.org;pepe@iescelia.org;lucia@iescelia.org`.
+
+## 1.7 Triggers
+```sql
 CREATE
     [DEFINER = { user | CURRENT_USER }]
     TRIGGER trigger_name
@@ -1127,38 +1256,44 @@ trigger_time: { BEFORE | AFTER }
 trigger_event: { INSERT | UPDATE | DELETE }
 
 trigger_order: { FOLLOWS | PRECEDES } other_trigger_name
+    
 Un trigger es un objeto de la base de datos que está asociado con una tabla y que se activa cuando ocurre un evento sobre la tabla.
+```
 
 Los eventos que pueden ocurrir sobre la tabla son:
 
-INSERT: El trigger se activa cuando se inserta una nueva fila sobre la tabla asociada.
-UPDATE: El trigger se activa cuando se actualiza una fila sobre la tabla asociada.
-DELETE: El trigger se activa cuando se elimina una fila sobre la tabla asociada.
-Ejemplo:
+- `INSERT`: El trigger se activa cuando se inserta una nueva fila sobre la tabla asociada.
+- `UPDATE`: El trigger se activa cuando se actualiza una fila sobre la tabla asociada.
+- `DELETE`: El trigger se activa cuando se elimina una fila sobre la tabla asociada.
 
-Crea una base de datos llamada test que contenga una tabla llamada alumnos con las siguientes columnas.
+**Ejemplo:**
 
-Tabla alumnos:
+Crea una base de datos llamada _test_ que contenga una tabla llamada _alumnos_ con las siguientes columnas.
 
-id (entero sin signo)
-nombre (cadena de caracteres)
-apellido1 (cadena de caracteres)
-apellido2 (cadena de caracteres)
-nota (número real)
-Una vez creada la tabla escriba dos triggers con las siguientes características:
+Tabla `alumnos`:
 
-Trigger 1: trigger_check_nota_before_insert
-Se ejecuta sobre la tabla alumnos.
-Se ejecuta antes de una operación de inserción.
-Si el nuevo valor de la nota que se quiere insertar es negativo, se guarda como 0.
-Si el nuevo valor de la nota que se quiere insertar es mayor que 10, se guarda como 10.
-Trigger2 : trigger_check_nota_before_update
-Se ejecuta sobre la tabla alumnos.
-Se ejecuta antes de una operación de actualización.
-Si el nuevo valor de la nota que se quiere actualizar es negativo, se guarda como 0.
-Si el nuevo valor de la nota que se quiere actualizar es mayor que 10, se guarda como 10.
-Una vez creados los triggers escriba varias sentencias de inserción y actualización sobre la tabla alumnos y verifica que los triggers se están ejecutando correctamente.
+- `id` (entero sin signo)
+- `nombre` (cadena de caracteres)
+- `apellido1` (cadena de caracteres)
+- `apellido2` (cadena de caracteres)
+- `nota` (número real)
 
+Una vez creada la tabla,  escriba **dos triggers** con las siguientes características:
+
+- Trigger 1: `trigger_check_nota_before_insert`
+  - Se ejecuta sobre la tabla alumnos.
+  - Se ejecuta antes de una operación de inserción.
+  - Si el nuevo valor de la nota que se quiere insertar es negativo, se guarda como 0.
+  - Si el nuevo valor de la nota que se quiere insertar es mayor que 10, se guarda como 10.
+  
+- Trigger2 : `trigger_check_nota_before_update`
+  - Se ejecuta sobre la tabla alumnos.
+  - Se ejecuta antes de una operación de actualización.
+  - Si el nuevo valor de la nota que se quiere actualizar es negativo, se guarda como 0.
+  - Si el nuevo valor de la nota que se quiere actualizar es mayor que 10, se guarda como 10.
+
+Una vez creados los triggers, escriba varias sentencias de inserción y actualización sobre la tabla `alumnos` y verifica que los triggers se están ejecutando correctamente.
+```sql
 -- Paso 1
 DROP DATABASE IF EXISTS test;
 CREATE DATABASE test;
@@ -1216,479 +1351,169 @@ UPDATE alumnos SET nota = 9.5 WHERE id = 3;
 
 -- Paso 7
 SELECT * FROM alumnos;
-1.8 Ejercicios
-1.8.1 Procedimientos sin sentencias SQL
-Escribe un procedimiento que no tenga ningún parámetro de entrada ni de salida y que muestre el texto ¡Hola mundo!.
+```
+### 1.7.1 Ejercicios de triggers
+1. Crea una base de datos llamada `test` que contenga una tabla llamada `alumnos` con las siguientes columnas.
 
-Escribe un procedimiento que reciba un número real de entrada y muestre un mensaje indicando si el número es positivo, negativo o cero.
+2. Tabla `alumnos`:
 
-Modifique el procedimiento diseñado en el ejercicio anterior para que tenga un parámetro de entrada, con el valor un número real, y un parámetro de salida, con una cadena de caracteres indicando si el número es positivo, negativo o cero.
+- `id` (entero sin signo)
+- `nombre` (cadena de caracteres)
+- `apellido1` (cadena de caracteres)
+- `apellido2` (cadena de caracteres)
+- `nota` (número real)
+- 
+Una vez creada la tabla, escriba dos triggers con las siguientes características:
 
-Escribe un procedimiento que reciba un número real de entrada, que representa el valor de la nota de un alumno, y muestre un mensaje indicando qué nota ha obtenido teniendo en cuenta las siguientes condiciones:
+- Trigger 1: `trigger_check_nota_before_insert`
+  - Se ejecuta sobre la tabla alumnos.
+  - Se ejecuta antes de una operación de inserción.
+  - Si el nuevo valor de la nota que se quiere insertar es negativo, se guarda como 0.
+  - Si el nuevo valor de la nota que se quiere insertar es mayor que 10, se guarda como 10.
 
-[0,5) = Insuficiente
-[5,6) = Aprobado
-[6, 7) = Bien
-[7, 9) = Notable
-[9, 10] = Sobresaliente
-En cualquier otro caso la nota no será válida.
-Modifique el procedimiento diseñado en el ejercicio anterior para que tenga un parámetro de entrada, con el valor de la nota en 
-9o00000000¡0'pformato numérico y un parámetro de salida, con una cadena de texto indicando la nota correspondiente.
+- Trigger2 : `trigger_check_nota_before_update`
+  - Se ejecuta sobre la tabla alumnos.
+  - Se ejecuta antes de una operación de actualización.
+  - Si el nuevo valor de la nota que se quiere actualizar es negativo, se guarda como 0.
+  - Si el nuevo valor de la nota que se quiere actualizar es mayor que 10, se guarda como 10.
 
-Resuelva el procedimiento diseñado en el ejercicio anterior haciendo uso de la estructura de control CASE.
+  Una vez creados los triggers escriba varias sentencias de inserción y actualización sobre la tabla alumnos y verifica que los triggers se están ejecutando correctamente.
 
-Escribe un procedimiento que reciba como parámetro de entrada un valor numérico que represente un día de la semana y que devuelva una cadena de caracteres con el nombre del día de la semana correspondiente. Por ejemplo, para el valor de entrada 1 debería devolver la cadena lunes. Resuelva el procedimiento haciendo uso de la estructura de control IF.
+2. Crea una base de datos llamada `test` que contenga una tabla llamada `alumnos` con las siguientes columnas.
 
-Resuelva el procedimiento diseñado en el ejercicio anterior haciendo uso de la estructura de control CASE.
+Tabla `alumnos`:
 
-1.8.2 Procedimientos con sentencias SQL
-Escribe un procedimiento que reciba el nombre de un país como parámetro de entrada y realice una consulta sobre la tabla cliente para obtener todos los clientes que existen en la tabla de ese país.
+- `id` (entero sin signo)
+- `nombre` (cadena de caracteres)
+- `apellido1` (cadena de caracteres)
+- `apellido2` (cadena de caracteres)
+- `email` (cadena de caracteres)
 
-Escribe un procedimiento que reciba como parámetro de entrada una forma de pago, que será una cadena de caracteres (Ejemplo: PayPal, Transferencia, etc). Y devuelva como salida el pago de máximo valor realizado para esa forma de pago. Deberá hacer uso de la tabla pago de la base de datos jardineria.
+Escriba un procedimiento llamado `crear_email` que dados los parámetros de entrada: `nombre`, `apellido1`, `apellido2` y `dominio`, cree una dirección de email y la devuelva como salida.
 
-Escribe un procedimiento que reciba como parámetro de entrada una forma de pago, que será una cadena de caracteres (Ejemplo: PayPal, Transferencia, etc). Y devuelva como salida los siguientes valores teniendo en cuenta la forma de pago seleccionada como parámetro de entrada:
-
-el pago de máximo valor,
-el pago de mínimo valor,
-el valor medio de los pagos realizados,
-la suma de todos los pagos,
-el número de pagos realizados para esa forma de pago.
-Deberá hacer uso de la tabla pago de la base de datos jardineria.
-
-Crea una base de datos llamada procedimientos que contenga una tabla llamada cuadrados. La tabla cuadrados debe tener dos columnas de tipo INT UNSIGNED, una columna llamada número y otra columna llamada cuadrado.
-Una vez creada la base de datos y la tabla deberá crear un procedimiento llamado calcular_cuadrados con las siguientes características. El procedimiento recibe un parámetro de entrada llamado tope de tipo INT UNSIGNED y calculará el valor de los cuadrados de los primeros números naturales hasta el valor introducido como parámetro. El valor del números y de sus cuadrados deberán ser almacenados en la tabla cuadrados que hemos creado previamente.
-
-Tenga en cuenta que el procedimiento deberá eliminar el contenido actual de la tabla antes de insertar los nuevos valores de los cuadrados que va a calcular.
-
-Utilice un bucle WHILE para resolver el procedimiento.
-
-Utilice un bucle REPEAT para resolver el procedimiento del ejercicio anterior.
-
-Utilice un bucle LOOP para resolver el procedimiento del ejercicio anterior.
-
-Crea una base de datos llamada procedimientos que contenga una tabla llamada ejercicio. La tabla debe tener una única columna llamada número y el tipo de dato de esta columna debe ser INT UNSIGNED.
-
-Una vez creada la base de datos y la tabla deberá crear un procedimiento llamado calcular_números con las siguientes características. El procedimiento recibe un parámetro de entrada llamado valor_inicial de tipo INT UNSIGNED y deberá almacenar en la tabla ejercicio toda la secuencia de números desde el valor inicial pasado como entrada hasta el 1.
-
-Tenga en cuenta que el procedimiento deberá eliminar el contenido actual de las tablas antes de insertar los nuevos valores.
-
-Utilice un bucle WHILE para resolver el procedimiento.
-
-Utilice un bucle REPEAT para resolver el procedimiento del ejercicio anterior.
-
-Utilice un bucle LOOP para resolver el procedimiento del ejercicio anterior.
-
-Crea una base de datos llamada procedimientos que contenga una tabla llamada pares y otra tabla llamada impares. Las dos tablas deben tener única columna llamada número y el tipo de dato de esta columna debe ser INT UNSIGNED.
-
-Una vez creada la base de datos y las tablas deberá crear un procedimiento llamado calcular_pares_impares con las siguientes características. El procedimiento recibe un parámetro de entrada llamado tope de tipo INT UNSIGNED y deberá almacenar en la tabla pares aquellos números pares que existan entre el número 1 el valor introducido como parámetro. Habrá que realizar la misma operación para almacenar los números impares en la tabla impares.
-
-Tenga en cuenta que el procedimiento deberá eliminar el contenido actual de las tablas antes de insertar los nuevos valores.
-
-Utilice un bucle WHILE para resolver el procedimiento.
-
-Utilice un bucle REPEAT para resolver el procedimiento del ejercicio anterior.
-
-Utilice un bucle LOOP para resolver el procedimiento del ejercicio anterior.
-
-1.8.3 Funciones sin sentencias SQL
-Escribe una función que reciba un número entero de entrada y devuelva TRUE si el número es par o FALSE en caso contrario.
-
-Escribe una función que devuelva el valor de la hipotenusa de un triángulo a partir de los valores de sus lados.
-
-Escribe una función que reciba como parámetro de entrada un valor numérico que represente un día de la semana y que devuelva una cadena de caracteres con el nombre del día de la semana correspondiente. Por ejemplo, para el valor de entrada 1 debería devolver la cadena lunes.
-
-Escribe una función que reciba tres números reales como parámetros de entrada y devuelva el mayor de los tres.
-
-Escribe una función que devuelva el valor del área de un círculo a partir del valor del radio que se recibirá como parámetro de entrada.
-
-Escribe una función que devuelva como salida el número de años que han transcurrido entre dos fechas que se reciben como parámetros de entrada. Por ejemplo, si pasamos como parámetros de entrada las fechas 2018-01-01 y 2008-01-01 la función tiene que devolver que han pasado 10 años.
-
-Para realizar esta función puede hacer uso de las siguientes funciones que nos proporciona MySQL:
-
-DATEDIFF
-TRUNCATE
-Escribe una función que reciba una cadena de entrada y devuelva la misma cadena pero sin acentos. La función tendrá que reemplazar todas las vocales que tengan acento por la misma vocal pero sin acento. Por ejemplo, si la función recibe como parámetro de entrada la cadena María la función debe devolver la cadena Maria.
-1.8.4 Funciones con sentencias SQL
-Escribe una función para la base de datos tienda que devuelva el número total de productos que hay en la tabla productos.
-
-Escribe una función para la base de datos tienda que devuelva el valor medio del precio de los productos de un determinado fabricante que se recibirá como parámetro de entrada. El parámetro de entrada será el nombre del fabricante.
-
-Escribe una función para la base de datos tienda que devuelva el valor máximo del precio de los productos de un determinado fabricante que se recibirá como parámetro de entrada. El parámetro de entrada será el nombre del fabricante.
-
-Escribe una función para la base de datos tienda que devuelva el valor mínimo del precio de los productos de un determinado fabricante que se recibirá como parámetro de entrada. El parámetro de entrada será el nombre del fabricante.
-
-1.8.5 Manejo de errores en MySQL
-Crea una base de datos llamada test que contenga una tabla llamada alumno. La tabla debe tener cuatro columnas:
-id: entero sin signo (clave primaria).
-nombre: cadena de 50 caracteres.
-apellido1: cadena de 50 caracteres.
-apellido2: cadena de 50 caracteres.
-Una vez creada la base de datos y la tabla deberá crear un procedimiento llamado insertar_alumno con las siguientes características. El procedimiento recibe cuatro parámetros de entrada (id, nombre, apellido1, apellido2) y los insertará en la tabla alumno. El procedimiento devolverá como salida un parámetro llamado error que tendrá un valor igual a 0 si la operación se ha podido realizar con éxito y un valor igual a 1 en caso contrario.
-
-Deberá manejar los errores que puedan ocurrir cuando se intenta insertar una fila que contiene una clave primaria repetida.
-
-1.8.6 Transacciones con procedimientos almacenados
-Crea una base de datos llamada cine que contenga dos tablas con las siguientes columnas.
-Tabla cuentas:
-
-id_cuenta: entero sin signo (clave primaria).
-saldo: real sin signo.
-Tabla entradas:
-
-id_butaca: entero sin signo (clave primaria).
-nif: cadena de 9 caracteres.
-Una vez creada la base de datos y las tablas deberá crear un procedimiento llamado comprar_entrada con las siguientes características. El procedimiento recibe 3 parámetros de entrada (nif, id_cuenta, id_butaca) y devolverá como salida un parámetro llamado error que tendrá un valor igual a 0 si la compra de la entrada se ha podido realizar con éxito y un valor igual a 1 en caso contrario.
-
-El procedimiento de compra realiza los siguientes pasos:
-
-Inicia una transacción.
-Actualiza la columna saldo de la tabla cuentas cobrando 5 euros a la cuenta con el id_cuenta adecuado.
-Inserta una una fila en la tabla entradas indicando la butaca (id_butaca) que acaba de comprar el usuario (nif).
-Comprueba si ha ocurrido algún error en las operaciones anteriores. Si no ocurre ningún error entonces aplica un COMMIT a la transacción y si ha ocurrido algún error aplica un ROLLBACK.
-Deberá manejar los siguientes errores que puedan ocurrir durante el proceso.
-
-ERROR 1264 (Out of range value)
-ERROR 1062 (Duplicate entry for PRIMARY KEY)
-¿Qué ocurre cuando intentamos comprar una entrada y le pasamos como parámetro un número de cuenta que no existe en la tabla cuentas? ¿Ocurre algún error o podemos comprar la entrada?
-En caso de que exista algún error, ¿cómo podríamos resolverlo?.
-
-1.8.7 Cursores
-Escribe las sentencias SQL necesarias para crear una base de datos llamada test, una tabla llamada alumnos y 4 sentencias de inserción para inicializar la tabla. La tabla alumnos está formada por las siguientes columnas:
-id (entero sin signo y clave primaria)
-nombre (cadena de caracteres)
-apellido1 (cadena de caracteres)
-apellido2 (cadena de caracteres
-fecha_nacimiento (fecha)
-Una vez creada la tabla se decide añadir una nueva columna a la tabla llamada edad que será un valor calculado a partir de la columna fecha_nacimiento. Escriba la sentencia SQL necesaria para modificar la tabla y añadir la nueva columna.
-
-Escriba una función llamada calcular_edad que reciba una fecha y devuelva el número de años que han pasado desde la fecha actual hasta la fecha pasada como parámetro:
-
-Función: calcular_edad
-Entrada: Fecha
-Salida: Número de años (entero)
-Ahora escriba un procedimiento que permita calcular la edad de todos los alumnmos que ya existen en la tabla. Para esto será necesario crear un procedimiento llamado actualizar_columna_edad que calcule la edad de cada alumno y actualice la tabla. Este procedimiento hará uso de la función calcular_edad que hemos creado en el paso anterior.
-
-Modifica la tabla alumnos del ejercicio anterior para añadir una nueva columna email. Una vez que hemos modificado la tabla necesitamos asignarle una dirección de correo electrónico de forma automática.
-Escriba un procedimiento llamado crear_email que dados los parámetros de entrada: nombre, apellido1, apellido2 y dominio, cree una dirección de email y la devuelva como salida.
-
-Procedimiento: crear_email
-Entrada:
-nombre (cadena de caracteres)
-apellido1 (cadena de caracteres)
-apellido2 (cadena de caracteres)
-dominio (cadena de caracteres)
-Salida:
-email (cadena de caracteres)
+- Procedimiento: `crear_email`
+- Entrada:
+  - `nombre` (cadena de caracteres)
+  - `apellido1` (cadena de caracteres)
+  - `apellido2` (cadena de caracteres)
+  - `dominio` (cadena de caracteres)
+- Salida:
+  - `email` (cadena de caracteres)
+- 
 devuelva una dirección de correo electrónico con el siguiente formato:
 
-El primer carácter del parámetro nombre.
-Los tres primeros caracteres del parámetro apellido1.
-Los tres primeros caracteres del parámetro apellido2.
-El carácter @.
-El dominio pasado como parámetro.
-Ahora escriba un procedimiento que permita crear un email para todos los alumnmos que ya existen en la tabla. Para esto será necesario crear un procedimiento llamado actualizar_columna_email que actualice la columna email de la tabla alumnos. Este procedimiento hará uso del procedimiento crear_email que hemos creado en el paso anterior.
+- El primer carácter del parámetro nombre.
+- Los tres primeros caracteres del parámetro apellido1.
+- Los tres primeros caracteres del parámetro apellido2.
+- El carácter @.
+- El dominio pasado como parámetro.
+- La dirección de email debe estar en minúsculas.
 
-Escribe un procedimiento llamado crear_lista_emails_alumnos que devuelva la lista de emails de la tabla alumnos separados por un punto y coma. Ejemplo: juan@iescelia.org;maria@iescelia.org;pepe@iescelia.org;lucia@iescelia.org.
-1.8.8 Triggers
-Crea una base de datos llamada test que contenga una tabla llamada alumnos con las siguientes columnas.
-Tabla alumnos:
+También deberá crear una función llamada `eliminar_acentos` que reciba una cadena de caracteres y devuelva la misma cadena sin acentos. La función tendrá que reemplazar todas las vocales que tengan acento por la misma vocal pero sin acento. Por ejemplo, si la función recibe como parámetro de entrada la cadena María la función debe devolver la cadena Maria.
 
-id (entero sin signo)
-nombre (cadena de caracteres)
-apellido1 (cadena de caracteres)
-apellido2 (cadena de caracteres)
-nota (número real)
-Una vez creada la tabla escriba dos triggers con las siguientes características:
+- Función: `eliminar_acentos`
+  - Entrada:
+    - `cadena` (cadena de caracteres)
+  - Salida: (cadena de caracteres)
 
-Trigger 1: trigger_check_nota_before_insert
-Se ejecuta sobre la tabla alumnos.
-Se ejecuta antes de una operación de inserción.
-Si el nuevo valor de la nota que se quiere insertar es negativo, se guarda como 0.
-Si el nuevo valor de la nota que se quiere insertar es mayor que 10, se guarda como 10.
-Trigger2 : trigger_check_nota_before_update
-Se ejecuta sobre la tabla alumnos.
-Se ejecuta antes de una operación de actualización.
-Si el nuevo valor de la nota que se quiere actualizar es negativo, se guarda como 0.
-Si el nuevo valor de la nota que se quiere actualizar es mayor que 10, se guarda como 10.
-Una vez creados los triggers escriba varias sentencias de inserción y actualización sobre la tabla alumnos y verifica que los triggers se están ejecutando correctamente.
-
-Crea una base de datos llamada test que contenga una tabla llamada alumnos con las siguientes columnas.
-Tabla alumnos:
-
-id (entero sin signo)
-nombre (cadena de caracteres)
-apellido1 (cadena de caracteres)
-apellido2 (cadena de caracteres)
-email (cadena de caracteres)
-Escriba un procedimiento llamado crear_email que dados los parámetros de entrada: nombre, apellido1, apellido2 y dominio, cree una dirección de email y la devuelva como salida.
-
-Procedimiento: crear_email
-Entrada:
-nombre (cadena de caracteres)
-apellido1 (cadena de caracteres)
-apellido2 (cadena de caracteres)
-dominio (cadena de caracteres)
-Salida:
-email (cadena de caracteres)
-devuelva una dirección de correo electrónico con el siguiente formato:
-
-El primer carácter del parámetro nombre.
-Los tres primeros caracteres del parámetro apellido1.
-Los tres primeros caracteres del parámetro apellido2.
-El carácter @.
-El dominio pasado como parámetro.
-La dirección de email debe estar en minúsculas.
-También deberá crear una función llamada eliminar_acentos que reciba una cadena de caracteres y devuelva la misma cadena sin acentos. La función tendrá que reemplazar todas las vocales que tengan acento por la misma vocal pero sin acento. Por ejemplo, si la función recibe como parámetro de entrada la cadena María la función debe devolver la cadena Maria.
-
-Función: eliminar_acentos
-Entrada:
-cadena (cadena de caracteres)
-Salida:
-(cadena de caracteres)
-El procedimiento crear_email deberá hacer uso de la función eliminar_acentos.
+El procedimiento `crear_email` deberá hacer uso de la función `eliminar_acentos`.
 
 Una vez creada la tabla escriba un trigger con las siguientes características:
 
-Trigger: trigger_crear_email_before_insert
-Se ejecuta sobre la tabla alumnos.
-Se ejecuta antes de una operación de inserción.
-Si el nuevo valor del email que se quiere insertar es NULL, entonces se le creará automáticamente una dirección de email y se insertará en la tabla.
-Si el nuevo valor del email no es NULL se guardará en la tabla el valor del email.
-Nota: Para crear la nueva dirección de email se deberá hacer uso del procedimiento crear_email.
+- Trigger: `trigger_crear_email_before_insert`
+  - Se ejecuta sobre la tabla alumnos.
+  - Se ejecuta antes de una operación de inserción.
+  - Si el nuevo valor del email que se quiere insertar es `NULL`, entonces se le creará automáticamente una dirección de email y se insertará en la tabla.
+  - Si el nuevo valor del email no es `NULL`, se guardará en la tabla el valor del email.
 
-Modifica el ejercicio anterior y añade un nuevo trigger que las siguientes características:
-Trigger: trigger_guardar_email_after_update:
+**Nota:** Para crear la nueva dirección de email se deberá hacer uso del procedimiento `crear_email`.
 
-Se ejecuta sobre la tabla alumnos.
-Se ejecuta después de una operación de actualización.
-Cada vez que un alumno modifique su dirección de email se deberá insertar un nuevo registro en una tabla llamada log_cambios_email.
-La tabla log_cambios_email contiene los siguientes campos:
+3. Modifica el ejercicio anterior y añade un nuevo trigger que las siguientes características:
+Trigger: `trigger_guardar_email_after_update`:
 
-id: clave primaria (entero autonumérico)
-id_alumno: id del alumno (entero)
-fecha_hora: marca de tiempo con el instante del cambio (fecha y hora)
-old_email: valor anterior del email (cadena de caracteres)
-new_email: nuevo valor con el que se ha actualizado
+- Se ejecuta sobre la tabla alumnos.
+- Se ejecuta después de una operación de actualización.
+- Cada vez que un alumno modifique su dirección de email se deberá insertar un nuevo registro en una tabla llamada `log_cambios_email`.
+
+La tabla `log_cambios_email` contiene los siguientes campos:
+  - `id`: clave primaria (entero autonumérico)
+  - `id_alumno`: id del alumno (entero)
+  - `fecha_hora`: marca de tiempo con el instante del cambio (fecha y hora)
+  - `old_email`: valor anterior del email (cadena de caracteres)
+  - `new_email`: nuevo valor con el que se ha actualizado
+
 Modifica el ejercicio anterior y añade un nuevo trigger que tenga las siguientes características:
-Trigger: trigger_guardar_alumnos_eliminados:
 
-Se ejecuta sobre la tabla alumnos.
-Se ejecuta después de una operación de borrado.
-Cada vez que se elimine un alumno de la tabla alumnos se deberá insertar un nuevo registro en una tabla llamada log_alumnos_eliminados.
-La tabla log_alumnos_eliminados contiene los siguientes campos:
+Trigger: `trigger_guardar_alumnos_eliminados`:
+- Se ejecuta sobre la tabla alumnos.
+- Se ejecuta después de una operación de borrado.
+- Cada vez que se elimine un alumno de la tabla alumnos se deberá insertar un nuevo registro en una tabla llamada `log_alumnos_eliminados`.
 
-id: clave primaria (entero autonumérico)
-id_alumno: id del alumno (entero)
-fecha_hora: marca de tiempo con el instante del cambio (fecha y hora)
-nombre: nombre del alumno eliminado (cadena de caracteres)
-apellido1: primer apellido del alumno eliminado (cadena de caracteres)
-apellido2: segundo apellido del alumno eliminado (cadena de caracteres)
-email: email del alumno eliminado (cadena de caracteres)
-1.9 Ejercicios de repaso
-¿Qué beneficios nos puede aportar utilizar procedimientos y funciones almacenadas?
+La tabla `log_alumnos_eliminados` contiene los siguientes campos:
+- `id`: clave primaria (entero autonumérico)
+- `id_alumno`: id del alumno (entero)
+- `fecha_hora`: marca de tiempo con el instante del cambio (fecha y hora)
+- `nombre`: nombre del alumno eliminado (cadena de caracteres)
+- `apellido1`: primer apellido del alumno eliminado (cadena de caracteres)
+- `apellido2`: segundo apellido del alumno eliminado (cadena de caracteres)
+- `email`: email del alumno eliminado (cadena de caracteres)
 
-Según la siguiente sentencia, ¿estamos haciendo una llamada a un procedimiento o a una función?
+## 1.8 Ejercicios de repaso
+1. Realice los siguientes procedimientos y funciones sobre la base de datos `jardineria`.
+**a)**  Función: `calcular_precio_total_pedido`
+  - Descripción: Dado un código de pedido la función debe calcular la suma total del pedido. Tenga en cuenta que un pedido puede contener varios productos diferentes y varias cantidades de cada producto.
+  - Parámetros de entrada: `codigo_pedido` (INT)
+  - Parámetros de salida: El precio total del pedido (DECIMAL)
 
-CALL resolver_ejercicio2()
-¿Cuáles de los siguientes bloques son correctos?
-1.
-LOOP bucle:
-  statements
-END bucle:
+**b)** Función: `calcular_suma_pedidos_cliente`
+  - Descripción: Dado un código de cliente la función debe calcular la suma total de todos los pedidos realizados por el cliente. Deberá hacer uso de la función `calcular_precio_total_pedido` que ha desarrollado en el apartado anterior.
+  - Parámetros de entrada: `codigo_cliente` (INT)
+  - Parámetros de salida: La suma total de todos los pedidos del cliente (DECIMAL)
 
-2.
-bucle: LOOP
-  statements
-END bucle;
+**c)** Función: `calcular_suma_pagos_cliente`
+  - Descripción: Dado un código de cliente la función debe calcular la suma total de los pagos realizados por ese cliente.
+  - Parámetros de entrada: `codigo_cliente` (INT)
+  - Parámetros de salida: La suma total de todos los pagos del cliente (DECIMAL)
 
-3.
-bucle:
-LOOP bucle;
-  statements;
-END bucle;
-¿Pueden aparecer las siguientes sentencias en el mismo bloque de código?
-DECLARE a INT;
-DECLARE a INT;
-¿Pueden aparecer las siguientes sentencias en el mismo bloque de código?
-DECLARE a INT;
-DECLARE a FLOAT;
-¿Pueden aparecer las siguientes sentencias en el mismo bloque de código?
-DECLARE b VARCHAR(20);
-DECLARE b HANDLER FOR SQLSTATE '02000';
-¿Para qué podemos utilizar un cursor en MySQL?
-
-¿Puedo actualizar los datos de un cursor en MySQL? Si fuese posible actualizar los datos de un cursor, ¿se actualizarían automáticamente los datos de la tabla?
-
-Cuál o cuáles de los siguientes bucles no está soportado en MySQL: FOR, LOOP, REPEAT y WHILE.
-
-Si el cuerpo del bucle se debe ejecutar al menos una vez, ¿qué bucle sería más apropiado?
-
-¿Qué valor devuelve la sentencia SELECT value?
-
-0
-9
-10
-NULL
-El código entra en un bucle infinito y nunca alcanza la sentencia SELECT value
-DELIMITER $$
-CREATE PROCEDURE incrementor (OUT i INT)
-BEGIN
-  REPEAT
-    SET i = i + 1;
-  UNTIL i > 9
-  END REPEAT;
-END;
-
-DELIMITER $$
-CREATE PROCEDURE test ()
-BEGIN
-  DECLARE value INT default 0;
-  CALL incrementor(value);
-
-  -- ¿Qué valor se muestra en esta sentencia?
-  SELECT value;
-END;
-
-DELIMITER ;
-CALL test();
-¿Qué valor devuelve la sentencia SELECT value?
-0
-9
-10
-NULL
-El código entra en un bucle infinito y nunca alcanza la sentencia SELECT value
-DELIMITER $$
-CREATE PROCEDURE incrementor (IN i INT)
-BEGIN
-  REPEAT
-    SET i = i + 1;
-  UNTIL i > 9
-  END REPEAT;
-END;
-
-DELIMITER $$
-CREATE PROCEDURE test ()
-BEGIN
-  DECLARE value INT default 0;
-  CALL incrementor(value);
-
-  -- ¿Qué valor se muestra en esta sentencia?
-  SELECT value;
-END;
-
-DELIMITER ;
-CALL test();
-Realice los siguientes procedimientos y funciones sobre la base de datos jardineria.
-Función: calcular_precio_total_pedido
-Descripción: Dado un código de pedido la función debe calcular la suma total del pedido. Tenga en cuenta que un pedido puede contener varios productos diferentes y varias cantidades de cada producto.
-Parámetros de entrada: codigo_pedido (INT)
-Parámetros de salida: El precio total del pedido (DECIMAL)
-Función: calcular_suma_pedidos_cliente
-Descripción: Dado un código de cliente la función debe calcular la suma total de todos los pedidos realizados por el cliente. Deberá hacer uso de la función calcular_precio_total_pedido que ha desarrollado en el apartado anterior.
-Parámetros de entrada: codigo_cliente (INT)
-Parámetros de salida: La suma total de todos los pedidos del cliente (DECIMAL)
-Función: calcular_suma_pagos_cliente
-Descripción: Dado un código de cliente la función debe calcular la suma total de los pagos realizados por ese cliente.
-Parámetros de entrada: codigo_cliente (INT)
-Parámetros de salida: La suma total de todos los pagos del cliente (DECIMAL)
-Procedimiento: calcular_pagos_pendientes
-Descripción: Deberá calcular los pagos pendientes de todos los clientes. Para saber si un cliente tiene algún pago pendiente deberemos calcular cuál es la cantidad de todos los pedidos y los pagos que ha realizado. Si la cantidad de los pedidos es mayor que la de los pagos entonces ese cliente tiene pagos pendientes.
-Deberá utilizar las funciones calcular_suma_pedidos_cliente y calcular_suma_pagos_cliente, que ha desarrollado en los ejercicios anteriores.
-Deberá insertar en una tabla llamada clientes_con_pagos_pendientes los siguientes datos:
-
-codigo_cliente
-suma_total_pedidos
-suma_total_pagos
-pendiente_de_pago
-Teniendo en cuenta el significado de los siguientes códigos de error:
-Error: 1036 (ER_OPEN_AS_READONLY). Table ‘%s’ is read only
-Error: 1062 (ER_DUP_ENTRY). Duplicate entry ‘%s’ for key %d
--- Paso 1
-CREATE TABLE t (s1 INT, PRIMARY KEY (s1));
-
--- Paso 2
-DELIMITER $$
-CREATE PROCEDURE handlerexam(IN a INT, IN b INT, IN c INT, OUT x INT)
-BEGIN
-  DECLARE EXIT HANDLER FOR 1036 SET x = 10;
-  DECLARE EXIT HANDLER FOR 1062 SET x = 30;
-
-  SET x = 1;
-  INSERT INTO t VALUES (a);
-  SET x = 2;
-  INSERT INTO t VALUES (b);
-  SET x = 3;
-  INSERT INTO t VALUES (c);
-  SET x = 4;
-END
-$$
-¿Qué devolvería la última sentencia SELECT @x en cada caso (a y b)? Justifique su respuesta. Sin una justificación válida la respuesta será considerada incorrecta.
-
--- a)
-CALL handlerexam(1, 2, 3, @x);
-SELECT @x;
-
--- b)
-CALL handlerexam(1, 2, 1, @x);
-SELECT @x;
-Dado el siguiente procedimiento:
--- Paso 1
-CREATE TABLE t (s1 INT, PRIMARY KEY (s1));
-
--- Paso 2
-DELIMITER $$
-CREATE PROCEDURE test(IN a INT, OUT b INT)
-BEGIN
-    SET b = 0;
-    WHILE a > b DO
-        SET b = b + 1;
-        IF b != 2 THEN
-            INSERT INTO t VALUES (b);
-        END IF
-    END WHILE;
-END;
-¿Qué valores tendría la tabla t y qué valor devuelve la sentencia SELECT value en cada caso (a y b)? Justifique la respuesta. Sin una justificación válida la respuesta será considerada incorrecta.
-
--- a)
-CALL test(-10, @value);
-SELECT @value;
-
--- b)
-CALL test(10, @value);
-SELECT @value;
-Escriba un procedimiento llamado obtener_numero_empleados que reciba como parámetro de entrada el código de una oficina y devuelva el número de empleados que tiene.
+**d)** Procedimiento: `calcular_pagos_pendientes`
+  - Descripción: Deberá calcular los pagos pendientes de todos los clientes. Para saber si un cliente tiene algún pago pendiente deberemos calcular cuál es la cantidad de todos los pedidos y los pagos que ha realizado. Si la cantidad de los pedidos es mayor que la de los pagos entonces ese cliente tiene pagos pendientes.
+  - Deberá utilizar las funciones `calcular_suma_pedidos_cliente` y `calcular_suma_pagos_cliente`, que ha desarrollado en los ejercicios anteriores.
+  - Deberá insertar en una tabla llamada `clientes_con_pagos_pendientes` los siguientes datos:
+    - `codigo_cliente`
+    - `suma_total_pedidos`
+    - `suma_total_pagos`
+    - `pendiente_de_pago`
+2. Escriba un procedimiento llamado `obtener_numero_empleados` que reciba como parámetro de entrada el código de una oficina y devuelva el número de empleados que tiene.
 Escriba una sentencia SQL que realice una llamada al procedimiento realizado para comprobar que se ejecuta correctamente.
-
-Escriba una función llamada cantidad_total_de_productos_vendidos que reciba como parámetro de entrada el código de un producto y devuelva la cantidad total de productos que se han vendido con ese código.
+3. Escriba una función llamada `cantidad_total_de_productos_vendidos` que reciba como parámetro de entrada el código de un producto y devuelva la cantidad total de productos que se han vendido con ese código.
 Escriba una sentencia SQL que realice una llamada a la función realizada para comprobar que se ejecuta correctamente.
-
-Crea una tabla que se llame productos_vendidos que tenga las siguientes columnas:
-id (entero sin signo, auto incremento y clave primaria)
-codigo_producto (cadena de caracteres)
-cantidad_total (entero)
-Escriba un procedimiento llamado estadísticas_productos_vendidos que para cada uno de los productos de la tabla producto calcule la cantidad total de unidades que se han vendido y almacene esta información en la tabla productos_vendidos.
+4. Crea una tabla que se llame `productos_vendidos` que tenga las siguientes columnas:
+- `id` (entero sin signo, auto incremento y clave primaria)
+- `codigo_producto` (cadena de caracteres)
+- `cantidad_total` (entero)
+Escriba un procedimiento llamado `estadísticas_productos_vendidos`, que para cada uno de los productos de la tabla producto,  calcule la cantidad total de unidades que se han vendido y almacene esta información en la tabla `productos_vendidos`.
 
 El procedimiento tendrá que realizar las siguientes acciones:
+- Borrar el contenido de la tabla `productos_vendidos`.
+- Calcular la cantidad total de productos vendidos. En este paso será necesario utilizar la función `cantidad_total_de_productos_vendidos` desarrollada en el ejercicio anterior.
+- Insertar en la tabla `productos_vendidos` los valores del código de producto y la cantidad total de unidades que se han vendido para ese producto en concreto.
 
-Borrar el contenido de la tabla productos_vendidos.
-Calcular la cantidad total de productos vendidos. En este paso será necesario utilizar la función cantidad_total_de_productos_vendidos desarrollada en el ejercicio anterior.
-Insertar en la tabla productos_vendidos los valores del código de producto y la cantidad total de unidades que se han vendido para ese producto en concreto.
-Crea una tabla que se llame notificaciones que tenga las siguientes columnas:
-id (entero sin signo, autoincremento y clave primaria)
-fecha_hora: marca de tiempo con el instante del pago (fecha y hora)
-total: el valor del pago (real)
-codigo_cliente: código del cliente que realiza el pago (entero)
+5. Crea una tabla que se llame `notificaciones` que tenga las siguientes columnas:
+- `id` (entero sin signo, autoincremento y clave primaria)
+- `fecha_hora`: marca de tiempo con el instante del pago (fecha y hora)
+- `total`: el valor del pago (real)
+- `codigo_cliente`: código del cliente que realiza el pago (entero)
 Escriba un trigger que nos permita llevar un control de los pagos que van realizando los clientes. Los detalles de implementación son los siguientes:
 
-Nombre: trigger_notificar_pago
-Se ejecuta sobre la tabla pago.
-Se ejecuta después de hacer la inserción de un pago.
-Cada vez que un cliente realice un pago (es decir, se hace una inserción en la tabla pago), el trigger deberá insertar un nuevo registro en una tabla llamada notificaciones.
+- Nombre: `trigger_notificar_pago`
+- Se ejecuta sobre la tabla `pago`.
+- Se ejecuta después de hacer la inserción de un pago.
+- Cada vez que un cliente realice un pago (es decir, se hace una inserción en la tabla `pago`), el trigger deberá insertar un nuevo registro en una tabla llamada `notificaciones`.
 Escriba algunas sentencias SQL para comprobar que el trigger funciona correctamente.
 
-1.10 Recursos
-MySQL Stored Procedures. Peter Gulutzan.
-MySQL Stored Procedures. MySQL Tutorial.
-2 Licencia
+## 1.10 Recursos
+[MySQL Stored Procedures](https://josejuansanchez.org/bd/unidad-12-teoria/resources/mysql-stored-procedures.pdf). Peter Gulutzan.
+[MySQL Stored Procedures](https://www.mysqltutorial.org/mysql-stored-procedure/). MySQL Tutorial.
+# 2 Licencia
 Licencia de Creative Commons
-Esta página forma parte del curso Bases de Datos de José Juan Sánchez Hernández y su contenido se distribuye bajo una licencia Creative Commons Reconocimiento-NoComercial-CompartirIgual 4.0 Internacional.
+Esta página ha sido adaptada a partir del curso [Bases de Datos](https://josejuansanchez.org/bd/) de [José Juan Sánchez Hernández](https://josejuansanchez.org/) y su contenido se distribuye bajo una licencia [Creative Commons Reconocimiento-NoComercial-CompartirIgual 4.0 Internacional].(https://creativecommons.org/licenses/by-nc-sa/4.0/)
