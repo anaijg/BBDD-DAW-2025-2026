@@ -1062,6 +1062,52 @@ Deberá manejar los siguientes errores que puedan ocurrir durante el proceso:
 ¿Qué ocurre cuando intentamos comprar una entrada y le pasamos como parámetro un número de cuenta que no existe en la tabla cuentas? ¿Ocurre algún error o podemos comprar la entrada?
 En caso de que exista algún error, ¿cómo podríamos resolverlo?.
 
+
+2. Crea una base de datos llamada banco con la siguiente tabla:
+
+- Tabla cuentas
+  - id_cuenta: entero sin signo (clave primaria)
+  - saldo: real sin signo
+- Procedimiento: transferir_dinero
+  - Debe:
+    - Recibir: p_origen, p_destino, p_cantidad
+    - Devolver: error (0 = OK, 1 = error)
+- Operaciones
+    - Iniciar transacción
+    - Restar p_cantidad a la cuenta origen
+    - Sumar p_cantidad a la cuenta destino
+    - Si todo va bien → COMMIT
+    - Si ocurre error → ROLLBACK
+- Errores a manejar
+    - 1264 → saldo negativo
+    - cuenta inexistenta
+
+
+
+3. Crea una base de datos llamada hotel con las siguientes tablas:
+
+- Tabla habitaciones:
+  - id_habitacion: entero sin signo (clave primaria)
+  - disponible: boolean (1 = libre, 0 = ocupada)
+- Tabla reservas
+  - id_reserva: entero autoincremental (clave primaria)
+  - nif: varchar(9)
+  - id_habitacion: entero sin signo
+- Procedimiento: reservar_habitacion
+  - Debe:
+    - Recibir: p_nif, p_id_habitacion 
+    - Devolver: error (0 = OK, 1 = error)
+- Operaciones
+  - Iniciar transacción
+  - Comprobar que la habitación está disponible
+  - Marcarla como no disponible
+  - Insertar la reserva
+  - Si todo va bien → COMMIT
+  - Si ocurre error → ROLLBACK
+- Errores a manejar
+  - 1062 → duplicado (si decides evitar reservas repetidas)
+  - Habitación no disponible
+  - Habitación inexistente
 ## 1.6 Cursores
 Los cursores nos permiten almacenar una conjunto de filas de una tabla en una estructura de datos que podemos ir recorriendo de forma secuencial.
 
@@ -1266,8 +1312,77 @@ Los eventos que pueden ocurrir sobre la tabla son:
 - `UPDATE`: El trigger se activa cuando se actualiza una fila sobre la tabla asociada.
 - `DELETE`: El trigger se activa cuando se elimina una fila sobre la tabla asociada.
 
-**Ejemplo:**
+** Ejemplo 1: trigger para poner nombre en mayúsculas **
+Crea una base de datos llamada test que contenga una tabla llamada personas con las siguientes columnas:
+- id (entero sin signo, clave primaria, autoincremental)
+- nombre (cadena de caracteres)
+Una vez creada la tabla, escribe un trigger con las siguientes características:
+- Nombre del trigger: trigger_mayusculas_before_insert
+- Se ejecuta sobre la tabla personas
+- Se ejecuta antes de una operación de inserción (BEFORE INSERT)
+- Para cada fila (FOR EACH ROW)
+- Convierte el valor del campo nombre a mayúsculas antes de almacenarlo en la tabla
+Para comprobar si el trigger funciona correctamente, 
+- Inserta al menos 3 registros en la tabla personas con nombres en minúsculas o mezcla de mayúsculas y minúsculas.
+- Realiza una consulta para comprobar que los nombres se han almacenado correctamente en mayúsculas.
 
+Modifica el trigger anterior para que:
+
+Si el nombre está vacío (''), se almacene el valor 'SIN NOMBRE'
+1. Crear base de datos y tabla
+```sql
+DROP DATABASE IF EXISTS test;
+CREATE DATABASE test;
+USE test;
+
+DROP TABLE IF EXISTS personas;
+CREATE TABLE personas (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(50)
+);
+```
+2. Crear el trigger (con la mejora)
+Este trigger hace dos cosas:
+- Si el nombre está vacío → guarda 'SIN NOMBRE'
+- En cualquier caso → convierte el nombre a mayúsculas
+```sql
+DELIMITER $$
+
+DROP TRIGGER IF EXISTS trigger_mayusculas_before_insert$$
+CREATE TRIGGER trigger_mayusculas_before_insert
+BEFORE INSERT ON personas
+FOR EACH ROW
+BEGIN
+    -- Comprobar si el nombre está vacío
+    IF NEW.nombre = '' THEN
+        SET NEW.nombre = 'SIN NOMBRE';
+    END IF;
+
+    -- Convertir a mayúsculas
+    SET NEW.nombre = UPPER(NEW.nombre);
+END$$
+
+DELIMITER ;
+```
+3. Probar el trigger
+```sql
+INSERT INTO personas (nombre) VALUES ('ana');
+INSERT INTO personas (nombre) VALUES ('Juan');
+INSERT INTO personas (nombre) VALUES ('');
+INSERT INTO personas (nombre) VALUES ('mArIa');
+```
+4. Comprobar resultados
+```sql
+SELECT * FROM personas;
+```
+Resultado esperado:
+```
+1 | ANA
+2 | JUAN
+3 | SIN NOMBRE
+4 | MARIA
+```
+**Ejemplo 2:**
 Crea una base de datos llamada _test_ que contenga una tabla llamada _alumnos_ con las siguientes columnas.
 
 Tabla `alumnos`:
