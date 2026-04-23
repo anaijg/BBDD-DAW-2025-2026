@@ -299,10 +299,10 @@ BEGIN
     DELETE FROM ejemplo1_REPEAT;
     -- ahora la rellenamos con el bucle
     REPEAT
-            IF contador % 2 != 0 THEN
-                INSERT INTO ejemplo1_REPEAT VALUE (contador);
-            END IF;
-            SET contador = contador + 1;
+        IF contador % 2 != 0 THEN
+            INSERT INTO ejemplo1_REPEAT VALUE (contador);
+        END IF;
+        SET contador = contador + 1;
     UNTIL contador > 30
         end REPEAT;
 end //
@@ -318,19 +318,23 @@ CREATE DATABASE test;
 USE test;
 
 -- Paso 2
-CREATE TABLE test.t (s1 INT, PRIMARY KEY (s1));
+CREATE TABLE test.t
+(
+    s1 INT,
+    PRIMARY KEY (s1)
+);
 
 -- Paso 3
 DELIMITER $$
 DROP PROCEDURE IF EXISTS handlerdemo;
-CREATE PROCEDURE handlerdemo ()
+CREATE PROCEDURE handlerdemo()
 BEGIN
-  DECLARE CONTINUE HANDLER FOR SQLSTATE '23000' SET @x = 100;
-  SET @x = 1;
-  INSERT INTO test.t VALUES (2);
-  SET @x = 2;
-  INSERT INTO test.t VALUES (2);
-  SET @x = 3;
+    DECLARE CONTINUE HANDLER FOR SQLSTATE '23000' SET @x = 100;
+    SET @x = 1;
+    INSERT INTO test.t VALUES (2);
+    SET @x = 2;
+    INSERT INTO test.t VALUES (2);
+    SET @x = 3;
 END
 $$
 
@@ -361,14 +365,17 @@ USE test;
 
 DROP TABLE IF EXISTS cuentas;
 
-CREATE TABLE cuentas (
-    id INT PRIMARY KEY,
+CREATE TABLE cuentas
+(
+    id      INT PRIMARY KEY,
     titular VARCHAR(50),
-    saldo DECIMAL(10,2)
+    saldo   DECIMAL(10, 2)
 );
 
-INSERT INTO cuentas VALUES (1, 'Ana', 1000);
-INSERT INTO cuentas VALUES (2, 'Luis', 500);
+INSERT INTO cuentas
+VALUES (1, 'Ana', 1000);
+INSERT INTO cuentas
+VALUES (2, 'Luis', 500);
 
 # Creamos el procedimiento con la transacción:
 DELIMITER $$
@@ -378,16 +385,16 @@ DROP PROCEDURE IF EXISTS transferencia;
 CREATE PROCEDURE transferencia(
     IN origen INT,
     IN destino INT,
-    IN cantidad DECIMAL(10,2)
+    IN cantidad DECIMAL(10, 2)
 )
 BEGIN
-  -- Handler para errores y warnings (si salta cualquier error o warning durante la transacción, hace ROLLBACK
-  DECLARE EXIT HANDLER FOR SQLEXCEPTION, SQLWARNING
-  BEGIN
-    ROLLBACK;
-  END;
+    -- Handler para errores y warnings (si salta cualquier error o warning durante la transacción, hace ROLLBACK
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION, SQLWARNING
+        BEGIN
+            ROLLBACK;
+        END;
 
-  START TRANSACTION;
+    START TRANSACTION;
 
     -- Restar dinero de la cuenta origen
     UPDATE cuentas
@@ -398,23 +405,25 @@ BEGIN
     UPDATE cuentas
     SET saldo = saldo + cantidad
     WHERE id = destino;
-
-  COMMIT;
+    COMMIT;
 
 END$$
 
 -- Hacemos una llamada en que to-do va bien:
-SELECT * FROM cuentas;
+SELECT *
+FROM cuentas;
 
 CALL transferencia(1, 2, 100);
 
-SELECT * FROM cuentas;
+SELECT *
+FROM cuentas;
 
 -- Hacemos una llamada en que falla algo: ejemplo: cuenta que no existe
 CALL transferencia(5, 2, 1000);
 
 CALL transferencia(1, 999, 100);
-SELECT * FROM cuentas;
+SELECT *
+FROM cuentas;
 
 ################################################
 # EJEMPLOS TRIGGER #############################
@@ -424,14 +433,117 @@ SELECT * FROM cuentas;
 # Crea una base de datos llamada test que contenga una tabla llamada personas con las siguientes columnas:
 # - id (entero sin signo, clave primaria, autoincremental)
 # - nombre (cadena de caracteres)
+USE test;
+CREATE TABLE personas
+(
+    id     INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(50)
+);
 # Una vez creada la tabla, escribe un trigger con las siguientes características:
 # - Nombre del trigger: trigger_mayusculas_before_insert
 # - Se ejecuta sobre la tabla personas
 # - Se ejecuta antes de una operación de inserción (BEFORE INSERT)
 # - Para cada fila (FOR EACH ROW)
+# Si el nombre está vacío (''), se almacene el valor 'SIN NOMBRE'
 # - Convierte el valor del campo nombre a mayúsculas antes de almacenarlo en la tabla
+DELIMITER //
+DROP TRIGGER IF EXISTS trigger_mayusculas_before_insert;
+CREATE TRIGGER trigger_mayusculas_before_insert -- creat trigger con su nombre
+    BEFORE INSERT -- Se ejecuta antes de una operación de inserción (BEFORE INSERT)
+    ON personas -- Se ejecuta sobre la tabla personas
+    FOR EACH ROW -- Para cada fila (FOR EACH ROW)
+BEGIN
+    -- Comprobar si el nombre está vacío y sustitirlo por 'SIN NOMBRE'
+    IF NEW.nombre = '' THEN
+        SET NEW.nombre = 'SIN NOMBRE';
+    end iF;
+    -- Convierte el valor del campo nombre a mayúsculas antes de almacenarlo en la tabla
+    SET NEW.nombre = UPPER(NEW.nombre);
+end //
 # Para comprobar si el trigger funciona correctamente,
 # - Inserta al menos 3 registros en la tabla personas con nombres en minúsculas o mezcla de mayúsculas y minúsculas.
+INSERT INTO personas (nombre)
+VALUES ('diego');
+INSERT INTO personas (nombre)
+VALUES ('jOrGe');
+INSERT INTO personas (nombre)
+VALUES ('AleXANdre');
+INSERT INTO personas (nombre)
+VALUES ('');
+
 # - Realiza una consulta para comprobar que los nombres se han almacenado correctamente en mayúsculas.
-# Modifica el trigger anterior para que:
-# Si el nombre está vacío (''), se almacene el valor 'SIN NOMBRE'
+SELECT *
+FROM personas;
+
+# **Ejemplo 2:**
+# Crea una base de datos llamada _test_ que contenga una tabla llamada _alumnos_ con las siguientes columnas.
+USE test;
+# Tabla `alumnos`:
+#
+# - `id` (entero sin signo)
+# - `nombre` (cadena de caracteres)
+# - `apellido1` (cadena de caracteres)
+# - `apellido2` (cadena de caracteres)
+# - `nota` (número real)
+CREATE TABLE alumnos
+(
+    id        INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    nombre    VARCHAR(50),
+    apellido1 VARCHAR(50),
+    apellido2 VARCHAR(50),
+    nota      REAL
+);
+# Una vez creada la tabla,  escriba **dos triggers** con las siguientes características:
+#
+# - Trigger 1: `trigger_check_nota_before_insert`
+#   - Se ejecuta sobre la tabla alumnos.
+#   - Se ejecuta antes de una operación de inserción.
+#   - Si el nuevo valor de la nota que se quiere insertar es negativo, se guarda como 0.
+#   - Si el nuevo valor de la nota que se quiere insertar es mayor que 10, se guarda como 10.
+DELIMITER //
+DROP TRIGGER IF EXISTS trigger_check_nota_before_insert;
+CREATE TRIGGER trigger_check_nota_before_insert
+    BEFORE INSERT -- Se ejecuta antes de una operación de inserción.
+    ON alumnos -- Se ejecuta sobre la tabla alumnos
+    FOR EACH ROW
+BEGIN
+    -- Si el nuevo valor de la nota que se quiere insertar es negativo, se guarda como 0.
+#   - Si el nuevo valor de la nota que se quiere insertar es mayor que 10, se guarda como 10.
+    IF NEW.nota < 0 THEN
+        SET NEW.nota = 0;
+    ELSEIF NEW.nota > 10 THEN
+        SET NEW.nota = 10;
+    END IF;
+end //
+# - Trigger2 : `trigger_check_nota_before_update`
+#   - Se ejecuta sobre la tabla alumnos.
+#   - Se ejecuta antes de una operación de actualización.
+#   - Si el nuevo valor de la nota que se quiere actualizar es negativo, se guarda como 0.
+#   - Si el nuevo valor de la nota que se quiere actualizar es mayor que 10, se guarda como 10.
+DELIMITER //
+DROP TRIGGER IF EXISTS trigger_check_nota_before_update;
+CREATE TRIGGER trigger_check_nota_before_update
+    BEFORE UPDATE -- Se ejecuta antes de una operación de actualización.
+    ON alumnos -- Se ejecuta sobre la tabla alumnos
+    FOR EACH ROW
+BEGIN
+    -- Si el nuevo valor de la nota que se quiere insertar es negativo, se guarda como 0.
+#   - Si el nuevo valor de la nota que se quiere insertar es mayor que 10, se guarda como 10.
+    IF NEW.nota < 0 THEN
+        SET NEW.nota = 0;
+    ELSEIF NEW.nota > 10 THEN
+        SET NEW.nota = 10;
+    END IF;
+end //
+
+
+# Una vez creados los triggers, escriba varias sentencias de inserción y actualización sobre la tabla `alumnos` y verifica que los triggers se están ejecutando correctamente.
+INSERT INTO alumnos (nombre, apellido1, apellido2, nota) VALUES ('Daftne', 'Osuna', 'Cabrera', 11);
+INSERT INTO alumnos (nombre, apellido1, apellido2, nota) VALUES ('Ana', 'Mala', 'Profe', -1);
+INSERT INTO alumnos (nombre, apellido1, apellido2, nota) VALUES ('Álvaro', 'Davidez', 'Elizabeth', 9);
+SELECT * FROM alumnos;
+
+UPDATE alumnos SET nota = 11 WHERE id IN (1,4);
+UPDATE alumnos SET nota = -1 WHERE id IN (2,5);
+SELECT * FROM alumnos;
+

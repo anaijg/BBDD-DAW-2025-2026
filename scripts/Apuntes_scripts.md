@@ -1471,7 +1471,7 @@ SELECT * FROM alumnos;
 ### 1.7.1 Ejercicios de triggers
 1. Crea una base de datos llamada `test` que contenga una tabla llamada `alumnos` con las siguientes columnas.
 
-2. Tabla `alumnos`:
+Tabla `alumnos`:
 
 - `id` (entero sin signo)
 - `nombre` (cadena de caracteres)
