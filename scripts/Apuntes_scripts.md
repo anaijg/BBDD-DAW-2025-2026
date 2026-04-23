@@ -1312,7 +1312,8 @@ Los eventos que pueden ocurrir sobre la tabla son:
 - `UPDATE`: El trigger se activa cuando se actualiza una fila sobre la tabla asociada.
 - `DELETE`: El trigger se activa cuando se elimina una fila sobre la tabla asociada.
 
-** Ejemplo 1: trigger para poner nombre en mayúsculas **
+**Ejemplo 1: trigger para poner nombre en mayúsculas**
+
 Crea una base de datos llamada test que contenga una tabla llamada personas con las siguientes columnas:
 - id (entero sin signo, clave primaria, autoincremental)
 - nombre (cadena de caracteres)

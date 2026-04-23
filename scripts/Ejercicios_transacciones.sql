@@ -105,6 +105,14 @@ FROM entradas;
 # Tabla cuentas
 # - id_cuenta: entero sin signo (clave primaria)
 # - saldo: real sin signo
+DROP DATABASE IF EXISTS banco;
+CREATE DATABASE banco;
+USE banco;
+CREATE TABLE cuentas
+(
+    id_cuenta INT UNSIGNED PRIMARY KEY,
+    saldo     REAL UNSIGNED
+);
 # Procedimiento: transferir_dinero
 # - Debe:
 #   - Recibir: p_origen, p_destino, p_cantidad
@@ -118,7 +126,69 @@ FROM entradas;
 # Errores a manejar
 #   - 1264 → saldo negativo
 #   - cuenta inexistente
+DELIMITER //
+DROP PROCEDURE IF EXISTS transferir_dinero;
+CREATE PROCEDURE transferir_dinero(IN p_origen INT UNSIGNED, p_destino INT UNSIGNED, p_cantidad REAL UNSIGNED,
+                                   OUT error INT UNSIGNED)
+BEGIN
+    # Errores a manejar
+#   - 1264 → saldo negativo
+#   - cuenta inexistente --> esto no tiene código de error en MySQL -> lo controlamos de forma lógica con IF
+    DECLARE EXIT HANDLER FOR 1264
+        BEGIN
+            SET error = 1;
+            ROLLBACK;
+        end;
 
+#   - Iniciar transacción
+    START TRANSACTION ;
+-- Lo primero que hago es entrar sólo si existe las cuentas de origen o destino; si no, p'atrás
+    IF (SELECT COUNT(*) FROM cuentas WHERE id_cuenta = p_origen > 0) AND
+       (SELECT COUNT(*) FROM cuentas WHERE id_cuenta = p_destino > 0) THEN
+        #   - Restar p_cantidad a la cuenta origen
+        UPDATE cuentas SET saldo = saldo - p_cantidad WHERE id_cuenta = p_origen;
+        #   - Sumar p_cantidad a la cuenta destino
+        UPDATE cuentas SET saldo = saldo + p_cantidad WHERE id_cuenta = p_destino;
+        #   Si todo va bien → COMMIT
+        COMMIT;
+        SET error = 0;
+    ELSE
+        SET error = 1;
+#   - Si ocurre error → ROLLBACK
+        ROLLBACK;
+    END IF;
+end //
+
+-- Probamos si funciona
+DELETE
+FROM cuentas;
+INSERT INTO cuentas
+VALUES (1, 500);
+INSERT INTO cuentas
+VALUES (2, 100);
+SELECT *
+FROM cuentas;
+-- Operación válida
+CALL transferir_dinero(1, 2, 200, @error);
+SELECT @error;
+SELECT *
+FROM cuentas;
+-- Operación no válida: saldo negativo
+CALL transferir_dinero(1, 2, 2000, @error);
+SELECT @error;
+SELECT *
+FROM cuentas;
+-- Operación no válida: cuenta origen inexistente
+CALL transferir_dinero(100, 2, 2, @error);
+SELECT @error;
+SELECT *
+FROM cuentas;
+
+-- Operación no válida: cuenta destino inexistente
+CALL transferir_dinero(1, 200, 2, @error);
+SELECT @error;
+SELECT *
+FROM cuentas;
 
 # 3. Crea una base de datos llamada hotel con las siguientes tablas:
 # Tabla habitaciones:

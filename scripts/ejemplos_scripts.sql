@@ -415,3 +415,23 @@ CALL transferencia(5, 2, 1000);
 
 CALL transferencia(1, 999, 100);
 SELECT * FROM cuentas;
+
+################################################
+# EJEMPLOS TRIGGER #############################
+################################################
+# **Ejemplo 1: trigger para poner nombre en mayúsculas**
+#
+# Crea una base de datos llamada test que contenga una tabla llamada personas con las siguientes columnas:
+# - id (entero sin signo, clave primaria, autoincremental)
+# - nombre (cadena de caracteres)
+# Una vez creada la tabla, escribe un trigger con las siguientes características:
+# - Nombre del trigger: trigger_mayusculas_before_insert
+# - Se ejecuta sobre la tabla personas
+# - Se ejecuta antes de una operación de inserción (BEFORE INSERT)
+# - Para cada fila (FOR EACH ROW)
+# - Convierte el valor del campo nombre a mayúsculas antes de almacenarlo en la tabla
+# Para comprobar si el trigger funciona correctamente,
+# - Inserta al menos 3 registros en la tabla personas con nombres en minúsculas o mezcla de mayúsculas y minúsculas.
+# - Realiza una consulta para comprobar que los nombres se han almacenado correctamente en mayúsculas.
+# Modifica el trigger anterior para que:
+# Si el nombre está vacío (''), se almacene el valor 'SIN NOMBRE'
