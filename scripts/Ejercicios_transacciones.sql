@@ -42,18 +42,104 @@ CREATE TABLE entradas
 DELIMITER //
 DROP PROCEDURE IF EXISTS comprar_entrada;
 CREATE PROCEDURE comprar_entrada(
-    IN nif VARCHAR(9), id_cuenta INT UNSIGNED, id_butaca INT UNSIGNED,
+    IN p_nif VARCHAR(9), p_id_cuenta INT UNSIGNED, p_id_butaca INT UNSIGNED,
     OUT error INT UNSIGNED
 )
 BEGIN
     DECLARE EXIT HANDLER FOR 1264, 1062
         BEGIN
             SET error = 1;
+            ROLLBACK;
         end;
 
     START TRANSACTION ;
+    -- Solamente haremos el commit si la cuenta existe realmente (al no dar problemas con SQL, no saltaría error, por lo que este error lo controlamos de forma lógica
 
-    COMMIT;
-
-
+    IF (SELECT COUNT(*) FROM cuentas WHERE id_cuenta = p_id_cuenta) > 0 THEN
+        -- Actualiza la columna saldo de la tabla cuentas cobrando 5 euros a la cuenta con el id_cuenta adecuado.
+        UPDATE cuentas SET saldo = saldo - 5 WHERE id_cuenta = p_id_cuenta;
+        -- Inserta una fila en la tabla entradas indicando la butaca (id_butaca) que acaba de comprar el usuario (nif).
+        INSERT INTO entradas VALUES (p_id_butaca, p_nif);
+        COMMIT;
+        SET error = 0;
+    ELSE
+        SET error = 1;
+        ROLLBACK;
+    END IF;
 end //
+
+-- Comprobamos que funciona
+-- Metemos datos en la tabla cuentas
+INSERT INTO cuentas
+VALUES (1, 10000);
+INSERT INTO cuentas
+VALUES (2, 5000);
+SELECT *
+FROM cuentas;
+
+-- Operación válida
+CALL comprar_entrada('11111111A', 1, 2, @error);
+SELECT @error;
+SELECT *
+FROM cuentas;
+SELECT *
+FROM entradas;
+
+-- Operación no válida
+CALL comprar_entrada('11111111A', 1, 2, @error); --
+SELECT @error;
+SELECT *
+FROM cuentas;
+SELECT *
+FROM entradas;
+
+-- Probamos una cuenta que no existe (esto no es un error MySQL, simplemente no devuelve nada, entonces es lo que controlamos con ID)
+CALL comprar_entrada('22222222B', 100, 3, @error);
+SELECT @error;
+SELECT *
+FROM cuentas;
+SELECT *
+FROM entradas;
+
+# 2. Crea una base de datos llamada banco con la siguiente tabla:
+# Tabla cuentas
+# - id_cuenta: entero sin signo (clave primaria)
+# - saldo: real sin signo
+# Procedimiento: transferir_dinero
+# - Debe:
+#   - Recibir: p_origen, p_destino, p_cantidad
+#   - Devolver: error (0 = OK, 1 = error)
+# Operaciones
+#   - Iniciar transacción
+#   - Restar p_cantidad a la cuenta origen
+#   - Sumar p_cantidad a la cuenta destino
+#   - Si todo va bien → COMMIT
+#   - Si ocurre error → ROLLBACK
+# Errores a manejar
+#   - 1264 → saldo negativo
+#   - cuenta inexistente
+
+
+# 3. Crea una base de datos llamada hotel con las siguientes tablas:
+# Tabla habitaciones:
+# id_habitacion: entero sin signo (clave primaria)
+# disponible: boolean (1 = libre, 0 = ocupada)
+# Tabla reservas
+# id_reserva: entero autoincremental (clave primaria)
+# nif: varchar(9)
+# id_habitacion: entero sin signo
+# Procedimiento: reservar_habitacion
+# Debe:
+# Recibir: p_nif, p_id_habitacion
+# Devolver: error (0 = OK, 1 = error)
+# Operaciones
+# Iniciar transacción
+# Comprobar que la habitación está disponible
+# Marcarla como no disponible
+# Insertar la reserva
+# Si todo va bien → COMMIT
+# Si ocurre error → ROLLBACK
+# Errores a manejar
+# 1062 → duplicado (si decides evitar reservas repetidas)
+# Habitación no disponible
+# Habitación inexistente
