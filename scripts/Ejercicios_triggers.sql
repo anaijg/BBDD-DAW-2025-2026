@@ -72,6 +72,8 @@ CREATE PROCEDURE crear_email(IN nombre VARCHAR(50),
                              apellido2 VARCHAR(50), dominio VARCHAR(42), OUT email VARCHAR(50))
 BEGIN
     SET email = LOWER(CONCAT(LEFT(nombre, 1), LEFT(apellido1, 3), LEFT(apellido2, 3), '@', dominio));
+    -- ahora quitamos los acentos llamando a la función
+    SET email = eliminar_acentos(email);
 end //
 
 CALL crear_email('Álvaro', 'Ítaca', 'Ramírez', 'daw.es', @email);
@@ -85,8 +87,22 @@ SELECT @email;
 #   - Salida: (cadena de caracteres)
 #
 # El procedimiento `crear_email` deberá hacer uso de la función `eliminar_acentos`.
-
+DELIMITER //
 DROP FUNCTION IF EXISTS eliminar_acentos;
+CREATE FUNCTION eliminar_acentos(cadena VARCHAR(100))
+    RETURNS VARCHAR(100)
+    NO SQL
+BEGIN
+    SET cadena = LOWER(cadena);
+    SET cadena = REPLACE(cadena, 'á', 'a');
+    SET cadena = REPLACE(cadena, 'é', 'e');
+    SET cadena = REPLACE(cadena, 'í', 'i');
+    SET cadena = REPLACE(cadena, 'ó', 'o');
+    SET cadena = REPLACE(cadena, 'ú', 'u');
+    RETURN cadena;
+end //
+
+SELECT eliminar_acentos('ÁÉíóu');
 
 # Una vez creada la tabla escriba un trigger con las siguientes características:
 #
@@ -97,28 +113,80 @@ DROP FUNCTION IF EXISTS eliminar_acentos;
 #   - Si el nuevo valor del email no es `NULL`, se guardará en la tabla el valor del email.
 #
 # **Nota:** Para crear la nueva dirección de email se deberá hacer uso del procedimiento `crear_email`.
-#
+DELIMITER //
+DROP TRIGGER IF EXISTS trigger_crear_email_before_insert;
+CREATE TRIGGER trigger_crear_email_before_insert
+    BEFORE INSERT
+    ON alumnos
+    FOR EACH ROW
+BEGIN
+    IF NEW.email IS NULL THEN
+        -- Como es un procedimiento, primero tenemos que llamarlo
+        CALL crear_email(NEW.nombre, NEW.apellido1, NEW.apellido2, 'educa.madrid.org', @email);
+        SET NEW.email = @email;
+    end if;
+end //
+
+-- Pruebas:
+-- Insert de un alumno sin email (el dominio es educa.madrid.org)
+INSERT INTO alumnos (nombre, apellido1, apellido2, email)
+VALUES ('Belinda', 'Cáspita', 'Córcholis', NULL);
+SELECT *
+FROM alumnos;
+
+-- Insert de un alumno com email
+INSERT INTO alumnos (nombre, apellido1, apellido2, email)
+VALUES ('Ramiro', 'López', 'Leches', 'ramirito@educa.madrid.org');
+SELECT *
+FROM alumnos;
+
 # 3. Modifica el ejercicio anterior y añade un nuevo trigger que las siguientes características:
-# Trigger: `trigger_guardar_email_after_update`:
-#
-# - Se ejecuta sobre la tabla alumnos.
-# - Se ejecuta después de una operación de actualización.
-# - Cada vez que un alumno modifique su dirección de email se deberá insertar un nuevo registro en una tabla llamada `log_cambios_email`.
-#
-# La tabla `log_cambios_email` contiene los siguientes campos:
+# Necesitaremos una tabla `log_cambios_email` contiene los siguientes campos:
 #   - `id`: clave primaria (entero autonumérico)
 #   - `id_alumno`: id del alumno (entero)
 #   - `fecha_hora`: marca de tiempo con el instante del cambio (fecha y hora)
 #   - `old_email`: valor anterior del email (cadena de caracteres)
 #   - `new_email`: nuevo valor con el que se ha actualizado
 #
-# Modifica el ejercicio anterior y añade un nuevo trigger que tenga las siguientes características:
-#
-# Trigger: `trigger_guardar_alumnos_eliminados`:
+DROP TABLE IF EXISTS log_cambios_email;
+CREATE TABLE log_cambios_email
+(
+    id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    id_alumno  INT UNSIGNED,
+    fecha_hora DATETIME,
+    old_email  VARCHAR(100),
+    new_email  VARCHAR(100)
+);
+
+# Trigger: `trigger_guardar_email_after_update`:
+
 # - Se ejecuta sobre la tabla alumnos.
-# - Se ejecuta después de una operación de borrado.
-# - Cada vez que se elimine un alumno de la tabla alumnos se deberá insertar un nuevo registro en una tabla llamada `log_alumnos_eliminados`.
+# - Se ejecuta después de una operación de actualización.
+# - Cada vez que un alumno modifique su dirección de email se deberá insertar un nuevo registro en una tabla llamada `log_cambios_email`.
 #
+DELIMITER //
+DROP TRIGGER IF EXISTS trigger_guardar_email_after_update;
+CREATE TRIGGER trigger_guardar_email_after_update
+    AFTER UPDATE
+    ON alumnos
+    FOR EACH ROW
+BEGIN
+    IF NEW.email != OLD.email THEN
+        INSERT INTO log_cambios_email (id_alumno, fecha_hora, old_email, new_email)
+        VALUES (OLD.id, NOW(), OLD.email, NEW.email);
+    end if;
+end //
+
+-- Prueba
+UPDATE alumnos
+SET email = 'fulanita@daw.es'
+WHERE id = 2;
+SELECT *
+FROM alumnos;
+SELECT *
+FROM log_cambios_email;
+
+# Para lo siguiente necesitamos otra tabla:
 # La tabla `log_alumnos_eliminados` contiene los siguientes campos:
 # - `id`: clave primaria (entero autonumérico)
 # - `id_alumno`: id del alumno (entero)
@@ -127,3 +195,37 @@ DROP FUNCTION IF EXISTS eliminar_acentos;
 # - `apellido1`: primer apellido del alumno eliminado (cadena de caracteres)
 # - `apellido2`: segundo apellido del alumno eliminado (cadena de caracteres)
 # - `email`: email del alumno eliminado (cadena de caracteres)
+DROP TABLE IF EXISTS log_alumnos_eliminados;
+CREATE TABLE log_alumnos_eliminados
+(
+    id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    id_alumno  INT UNSIGNED,
+    fecha_hora DATETIME,
+    nombre     VARCHAR(50),
+    apellido1  VARCHAR(50),
+    apellido2  VARCHAR(50),
+    email      VARCHAR(100)
+);
+
+# Modifica el ejercicio anterior y añade un nuevo trigger que tenga las siguientes características:
+#
+# Trigger: `trigger_guardar_alumnos_eliminados`:
+# - Se ejecuta sobre la tabla alumnos.
+# - Se ejecuta después de una operación de borrado.
+# - Cada vez que se elimine un alumno de la tabla alumnos se deberá insertar un nuevo registro en una tabla llamada `log_alumnos_eliminados`.
+DELIMITER //
+DROP TRIGGER IF EXISTS trigger_guardar_alumnos_eliminados;
+CREATE TRIGGER trigger_guardar_alumnos_eliminados
+    AFTER DELETE
+    ON alumnos
+    FOR EACH ROW
+BEGIN
+    INSERT INTO log_alumnos_eliminados (id_alumno, fecha_hora, nombre, apellido1, apellido2, email)
+    VALUES (OLD.id, NOW(), OLD.nombre, OLD.apellido1, OLD.apellido2, OLD.email);
+end
+//
+
+DELETE FROM alumnos WHERE id = 1;
+SELECT * FROM alumnos;
+SELECT * FROM log_alumnos_eliminados;
+
