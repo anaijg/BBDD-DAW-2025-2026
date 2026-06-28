@@ -1632,4 +1632,4 @@ Escriba algunas sentencias SQL para comprobar que el trigger funciona correctame
 [MySQL Stored Procedures](https://www.mysqltutorial.org/mysql-stored-procedure/). MySQL Tutorial.
 # 2 Licencia
 Licencia de Creative Commons
-Esta página ha sido adaptada por **Ana Isabel Jiménez** a partir del curso [Bases de Datos](https://josejuansanchez.org/bd/) de [José Juan Sánchez Hernández](https://josejuansanchez.org/) y su contenido se distribuye bajo una licencia [Creative Commons Reconocimiento-NoComercial-CompartirIgual 4.0 Internacional].(https://creativecommons.org/licenses/by-nc-sa/4.0/)
+Esta página ha sido adaptada (reorganizando, seleccionando y añadiendo contenidos) por **Ana Isabel Jiménez** a partir del curso [Bases de Datos](https://josejuansanchez.org/bd/) de [José Juan Sánchez Hernández](https://josejuansanchez.org/) y su contenido se distribuye bajo una licencia [Creative Commons Reconocimiento-NoComercial-CompartirIgual 4.0 Internacional].(https://creativecommons.org/licenses/by-nc-sa/4.0/)
